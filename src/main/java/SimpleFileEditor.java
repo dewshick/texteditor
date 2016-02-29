@@ -8,7 +8,7 @@ public class SimpleFileEditor extends JPanel {
 
     JTextArea editableArea;
 
-    private final JTextArea initEditableArea() {
+    private static final JTextArea initEditableArea() {
         final Dimension TEXT_AREA_SIZE = new Dimension(40, 40);
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
         JTextArea editableArea = new JTextArea(TEXT_AREA_SIZE.height, TEXT_AREA_SIZE.width);
@@ -22,12 +22,12 @@ public class SimpleFileEditor extends JPanel {
     JButton openButton;
     JButton saveButton;
 
-    private final JButton openingButton() {
+    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextArea editableArea) {
         JButton openButton = new JButton("Open a File...");
         openButton.addActionListener((event) -> {
-            int returnVal = fc.showOpenDialog(SimpleFileEditor.this);
+            int returnVal = fileChooser.showOpenDialog(fileEditor);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
+                File file = fileChooser.getSelectedFile();
                 try {
                     Scanner scanner = new Scanner(file);
                     scanner.useDelimiter("\\n");
@@ -48,12 +48,12 @@ public class SimpleFileEditor extends JPanel {
         return openButton;
     }
 
-    private final JButton savingButton() {
+    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextArea editableArea) {
         JButton saveButton = new JButton("Save changes");
         saveButton.addActionListener((event) -> {
-            int returnVal = fc.showSaveDialog(SimpleFileEditor.this);
+            int returnVal = fileChooser.showSaveDialog(fileEditor);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
-                File file = fc.getSelectedFile();
+                File file = fileChooser.getSelectedFile();
                 try {
                     PrintWriter writer = new PrintWriter(file);
                     writer.write(editableArea.getText());
@@ -73,8 +73,8 @@ public class SimpleFileEditor extends JPanel {
         super(new BorderLayout());
         fc = new JFileChooser();
         editableArea = initEditableArea();
-        openButton = openingButton();
-        saveButton = savingButton();
+        openButton = openingButton(this, fc, editableArea);
+        saveButton = savingButton(this, fc, editableArea);
         editScrollPane = new JScrollPane(editableArea);
 
         JPanel buttonPanel = new JPanel();
