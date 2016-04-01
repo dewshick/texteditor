@@ -1,3 +1,5 @@
+import languages.java.JavaDocument;
+import javax.swing.text.*;
 import java.io.*;
 import java.awt.*;
 import java.util.Scanner;
@@ -6,23 +8,23 @@ import javax.swing.SwingUtilities;
 
 public class SimpleFileEditor extends JPanel {
 
-    JTextArea editableArea;
+    JTextPane editableArea;
 
-    private static final JTextArea initEditableArea() {
+    private static final JTextPane initEditableArea() {
         final Dimension TEXT_AREA_SIZE = new Dimension(40, 40);
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
-        JTextArea editableArea = new JTextArea(TEXT_AREA_SIZE.height, TEXT_AREA_SIZE.width);
+        JTextPane editableArea = new JTextPane(new JavaDocument());
         editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
 
     JScrollPane editScrollPane;
-    JFileChooser fc = new JFileChooser();
+    JFileChooser fc;
 
     JButton openButton;
     JButton saveButton;
 
-    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextArea editableArea) {
+    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextPane editableArea) {
         JButton openButton = new JButton("Open a File...");
         openButton.addActionListener((event) -> {
             int returnVal = fileChooser.showOpenDialog(fileEditor);
@@ -48,7 +50,7 @@ public class SimpleFileEditor extends JPanel {
         return openButton;
     }
 
-    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextArea editableArea) {
+    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextPane editableArea) {
         JButton saveButton = new JButton("Save changes");
         saveButton.addActionListener((event) -> {
             int returnVal = fileChooser.showSaveDialog(fileEditor);
@@ -73,8 +75,8 @@ public class SimpleFileEditor extends JPanel {
         super(new BorderLayout());
         fc = new JFileChooser();
         editableArea = initEditableArea();
-        openButton = openingButton(this, fc, editableArea);
         saveButton = savingButton(this, fc, editableArea);
+        openButton = openingButton(this, fc, editableArea);
         editScrollPane = new JScrollPane(editableArea);
 
         JPanel buttonPanel = new JPanel();
@@ -94,9 +96,6 @@ public class SimpleFileEditor extends JPanel {
     }
 
     public static void main(String[] args) {
-        SwingUtilities.invokeLater(() -> {
-            UIManager.put("swing.boldMetal", Boolean.FALSE);
-            createAndShowGUI();
-        });
+        SwingUtilities.invokeLater(() -> createAndShowGUI());
     }
 }
