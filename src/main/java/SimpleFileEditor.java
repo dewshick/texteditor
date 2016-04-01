@@ -85,6 +85,25 @@ public class SimpleFileEditor extends JPanel {
 
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
+        editableArea.setText(readDefaultFile());
+    }
+
+    private String readDefaultFile() {
+        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/languages/java/JavaDocument.java";
+        try {
+            Scanner scanner = new Scanner(new File(path));
+            scanner.useDelimiter("\\n");
+            StringBuilder text = new StringBuilder();
+            while (scanner.hasNext()) {
+                text.append(scanner.next());
+                if (scanner.hasNext())
+                    text.append("\n");
+            }
+            return text.toString();
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        return "";
     }
 
     private static void createAndShowGUI() {

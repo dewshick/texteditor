@@ -23,9 +23,14 @@ public class JavaDocument extends DefaultStyledDocument {
 
     static final StyleContext cont = StyleContext.getDefaultStyleContext();
 
-    static final AttributeSet keywordAttr = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, Color.RED);
+    static final AttributeSet keywordAttr = colorAttr(Color.BLUE);
+    static final AttributeSet identifierAttr = colorAttr(Color.GREEN);
+    static final AttributeSet defaultAttr = colorAttr(Color.BLACK);
 
-    static final AttributeSet defaultAttr = cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, Color.BLACK);
+    private static final AttributeSet colorAttr(Color color) {
+        StyleContext cont = StyleContext.getDefaultStyleContext();
+        return cont.addAttribute(cont.getEmptySet(), StyleConstants.Foreground, color);
+    }
 
     public void insertString (int offset, String str, AttributeSet a) throws BadLocationException {
         super.insertString(offset, str, a);
@@ -48,6 +53,9 @@ public class JavaDocument extends DefaultStyledDocument {
             AttributeSet tokenAttr = defaultAttr;
             if (keywords.contains(tokenName))
                 tokenAttr = keywordAttr;
+            else if (tokenName.equals("Identifier"))
+                tokenAttr = identifierAttr;
+
             setCharacterAttributes(t.getStartIndex(), t.getText().length(), tokenAttr, false);
         }
     }
