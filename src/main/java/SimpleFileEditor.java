@@ -1,4 +1,8 @@
+import languages.BracketIndex;
 import languages.java.JavaDocument;
+
+import javax.swing.event.CaretEvent;
+import javax.swing.event.CaretListener;
 import javax.swing.text.*;
 import java.io.*;
 import java.awt.*;
@@ -86,6 +90,25 @@ public class SimpleFileEditor extends JPanel {
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
         editableArea.setText(readDefaultFile());
+
+        editableArea.addCaretListener(caretEvent -> {
+            JavaDocument javaDocument = (JavaDocument)editableArea.getDocument();
+            BracketIndex.BracketHighlighting highlighting = javaDocument.getBracketHighlighting(caretEvent.getDot());
+
+            Highlighter.HighlightPainter errorBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+            Highlighter.HighlightPainter correctBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+
+            Highlighter highlighter = editableArea.getHighlighter();
+            highlighter.removeAllHighlights();
+            try {
+                for (int workingBrace : highlighting.getWorkingBraces())
+                    highlighter.addHighlight(workingBrace, workingBrace + 1, correctBracketsPainter);
+                for (int brokenBrace : highlighting.getBrokenBraces())
+                    highlighter.addHighlight(brokenBrace, brokenBrace + 1, errorBracketsPainter);
+            } catch (BadLocationException e1) {
+                e1.printStackTrace();
+            }
+        });
     }
 
     private String readDefaultFile() {

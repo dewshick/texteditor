@@ -1,10 +1,7 @@
 package languages.java;
 
-import jdk.nashorn.internal.parser.Lexer;
+import languages.BracketIndex;
 import languages.LexerWrapper;
-import languages.java.antlr.JavaLexer;
-import org.antlr.v4.runtime.ANTLRInputStream;
-import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Token;
 
 import javax.swing.text.*;
@@ -18,6 +15,13 @@ import java.util.HashSet;
 
 // TODO: use common CodeDocument and pass rule-based engine for tokens' color in java & js
 public class JavaDocument extends DefaultStyledDocument {
+    public JavaDocument() {
+        super();
+        bracketHighlightingIndex = BracketIndex.forJavaBraces(allText());
+    }
+
+    BracketIndex bracketHighlightingIndex;
+
     static final HashSet<String> keywords = new HashSet<>(Arrays.asList("'abstract'","'assert'","'boolean'","'break'","'byte'","'case'","'catch'","'char'","'class'","'const'","'continue'","'default'","'do'","'double'","'else'","'enum'","'extends'","'final'","'finally'","'float'","'for'","'if'","'goto'","'implements'","'import'","'instanceof'","'int'","'interface'","'long'","'native'","'new'","'package'","'private'","'protected'","'public'","'return'","'short'","'static'","'strictfp'","'super'","'switch'","'synchronized'","'this'","'throw'","'throws'","'transient'","'try'","'void'","'volatile'","'while'"));
 
     static final StyleContext cont = StyleContext.getDefaultStyleContext();
@@ -42,9 +46,13 @@ public class JavaDocument extends DefaultStyledDocument {
         colorizeText();
     }
 
-    private void colorizeText() throws BadLocationException {
-        String text = getText(0, getLength());
-        LexerWrapper lexer = LexerWrapper.javaLexer(text);
+    public BracketIndex.BracketHighlighting getBracketHighlighting(int caretPosition) {
+        return bracketHighlightingIndex.getHighlighting(caretPosition);
+    }
+
+    private void colorizeText() {
+        bracketHighlightingIndex = BracketIndex.forJavaBraces(allText());
+        LexerWrapper lexer = LexerWrapper.javaLexer(allText());
 
         for (Token t : lexer.tokens()) {
             String tokenName = lexer.getTokenType(t);
@@ -57,6 +65,14 @@ public class JavaDocument extends DefaultStyledDocument {
                 tokenAttr = commentAttr;
 
             setCharacterAttributes(t.getStartIndex(), t.getText().length(), tokenAttr, false);
+        }
+    }
+
+    private String allText() {
+        try {
+            return getText(0, getLength());
+        } catch (BadLocationException e) {
+            return "";
         }
     }
 }

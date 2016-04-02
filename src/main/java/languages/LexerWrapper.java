@@ -18,13 +18,15 @@ public class LexerWrapper {
     }
 
     Lexer lexer;
+    List<? extends Token> tokens;
 
     private LexerWrapper(Lexer l) {
         lexer = l;
+        tokens = l.getAllTokens();
     }
 
     public List<? extends Token> tokens() {
-        return lexer.getAllTokens();
+        return tokens;
     }
 
     public static LexerWrapper javaLexer(String input) {

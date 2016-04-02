@@ -64,9 +64,14 @@ public class BracketIndex {
             this.brokenBraces = brokenBraces;
         }
 
+        public List<Integer> getWorkingBraces() { return workingBraces; }
+        public List<Integer> getBrokenBraces() { return brokenBraces; }
         List<Integer> workingBraces;
         List<Integer> brokenBraces;
     }
 
+    public static BracketIndex forJavaBraces(String input) {
+        return new BracketIndex("'('", "')'", LexerWrapper.javaLexer(input));
+    }
 }
 
