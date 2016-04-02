@@ -1,6 +1,6 @@
-package languages;
-import org.antlr.v4.runtime.Lexer;
+package syntax.brackets;
 import org.antlr.v4.runtime.Token;
+import syntax.LexerWrapper;
 
 import java.util.*;
 
@@ -47,28 +47,6 @@ public class BracketIndex {
 
     HashMap<Integer, List<Integer>> brokenBracesIndex;
     HashMap<Integer, List<Integer>> correctBracesIndex;
-
-    public class BracketHighlighting {
-        @Override
-        public String toString() {
-            return "{" + "workingBraces=" + workingBraces + ", brokenBraces=" + brokenBraces + '}';
-        }
-
-        public BracketHighlighting(List<Integer> workingBraces, List<Integer> brokenBraces) {
-            if (workingBraces == null)
-                workingBraces = new ArrayList<>(0);
-            if (brokenBraces == null)
-                brokenBraces = new ArrayList<>(0);
-
-            this.workingBraces = workingBraces;
-            this.brokenBraces = brokenBraces;
-        }
-
-        public List<Integer> getWorkingBraces() { return workingBraces; }
-        public List<Integer> getBrokenBraces() { return brokenBraces; }
-        List<Integer> workingBraces;
-        List<Integer> brokenBraces;
-    }
 
     public static BracketIndex forJavaBraces(String input) {
         return new BracketIndex("'('", "')'", LexerWrapper.javaLexer(input));

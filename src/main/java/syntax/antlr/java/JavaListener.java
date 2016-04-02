@@ -1,4 +1,4 @@
-package languages.java.antlr;
+package syntax.antlr.java;
 // Generated from Java.g4 by ANTLR 4.5.2
 import org.antlr.v4.runtime.tree.ParseTreeListener;
 

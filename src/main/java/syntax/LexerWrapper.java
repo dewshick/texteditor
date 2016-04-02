@@ -1,7 +1,7 @@
-package languages;
+package syntax;
 
-import languages.ecmascript.antlr.ECMAScriptLexer;
-import languages.java.antlr.JavaLexer;
+import syntax.antlr.ecmascript.ECMAScriptLexer;
+import syntax.antlr.java.JavaLexer;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;

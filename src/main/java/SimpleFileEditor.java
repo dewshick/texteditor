@@ -1,8 +1,7 @@
-import languages.BracketIndex;
-import languages.java.JavaDocument;
-
-import javax.swing.event.CaretEvent;
-import javax.swing.event.CaretListener;
+import syntax.brackets.BracketHighlighting;
+import syntax.brackets.BracketIndex;
+import syntax.document.CodeDocument;
+import syntax.document.CodeDocumentFactory;
 import javax.swing.text.*;
 import java.io.*;
 import java.awt.*;
@@ -17,7 +16,7 @@ public class SimpleFileEditor extends JPanel {
     private static final JTextPane initEditableArea() {
         final Dimension TEXT_AREA_SIZE = new Dimension(40, 40);
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
-        JTextPane editableArea = new JTextPane(new JavaDocument());
+        JTextPane editableArea = new JTextPane(CodeDocumentFactory.forJava());
         editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
@@ -92,8 +91,8 @@ public class SimpleFileEditor extends JPanel {
         editableArea.setText(readDefaultFile());
 
         editableArea.addCaretListener(caretEvent -> {
-            JavaDocument javaDocument = (JavaDocument)editableArea.getDocument();
-            BracketIndex.BracketHighlighting highlighting = javaDocument.getBracketHighlighting(caretEvent.getDot());
+            CodeDocument javaDocument = (CodeDocument)editableArea.getDocument();
+            BracketHighlighting highlighting = javaDocument.getBracketHighlighting(caretEvent.getDot());
 
             Highlighter.HighlightPainter errorBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
             Highlighter.HighlightPainter correctBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
@@ -112,7 +111,7 @@ public class SimpleFileEditor extends JPanel {
     }
 
     private String readDefaultFile() {
-        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/languages/java/JavaDocument.java";
+        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/SimpleFileEditor.java";
         try {
             Scanner scanner = new Scanner(new File(path));
             scanner.useDelimiter("\\n");

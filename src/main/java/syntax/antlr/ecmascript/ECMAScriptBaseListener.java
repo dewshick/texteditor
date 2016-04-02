@@ -1,4 +1,4 @@
-package languages.ecmascript.antlr;// Generated from ECMAScript.g4 by ANTLR 4.5.2
+package syntax.antlr.ecmascript;// Generated from ECMAScript.g4 by ANTLR 4.5.2
 
 import org.antlr.v4.runtime.ParserRuleContext;
 import org.antlr.v4.runtime.tree.ErrorNode;
