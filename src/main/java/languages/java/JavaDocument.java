@@ -47,8 +47,7 @@ public class JavaDocument extends DefaultStyledDocument {
         LexerWrapper lexer = LexerWrapper.javaLexer(text);
 
         for (Token t : lexer.tokens()) {
-            String tokenName = JavaLexer.VOCABULARY.getDisplayName(t.getType());
-
+            String tokenName = lexer.getTokenType(t);
             AttributeSet tokenAttr = defaultAttr;
             if (keywords.contains(tokenName))
                 tokenAttr = keywordAttr;
