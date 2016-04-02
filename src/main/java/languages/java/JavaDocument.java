@@ -1,5 +1,7 @@
 package languages.java;
 
+import jdk.nashorn.internal.parser.Lexer;
+import languages.LexerWrapper;
 import languages.java.antlr.JavaLexer;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
@@ -7,13 +9,8 @@ import org.antlr.v4.runtime.Token;
 
 import javax.swing.text.*;
 import java.awt.*;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Map;
 
 /**
  * Created by avyatkin on 15/03/16.
@@ -47,10 +44,9 @@ public class JavaDocument extends DefaultStyledDocument {
 
     private void colorizeText() throws BadLocationException {
         String text = getText(0, getLength());
-        CharStream cs = new ANTLRInputStream(text);
-        JavaLexer lexer = new JavaLexer(cs);
+        LexerWrapper lexer = LexerWrapper.javaLexer(text);
 
-        for (Token t : lexer.getAllTokens()) {
+        for (Token t : lexer.tokens()) {
             String tokenName = JavaLexer.VOCABULARY.getDisplayName(t.getType());
 
             AttributeSet tokenAttr = defaultAttr;
