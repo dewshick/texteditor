@@ -925,11 +925,11 @@ WhiteSpaces
 
 /// 7.4 Comments
 MultiLineComment
- : '/*' .*? '*/' -> channel(HIDDEN)
+ : '/*' .*? '*/'
  ;
 
 SingleLineComment
- : '//' ~[\r\n\u2028\u2029]* -> channel(HIDDEN)
+ : '//' ~[\r\n\u2028\u2029]*
  ;
 
 UnexpectedCharacter

@@ -44,11 +44,11 @@ public class CodeDocumentFactory {
         List<SyntaxColorRule> colorRules = Arrays.asList(
                 new SyntaxColorRule(Color.BLUE, keywordTokens),
                 new SyntaxColorRule(Color.ORANGE, identifier),
-                new SyntaxColorRule(Color.GRAY, commentTokens));
+                new SyntaxColorRule(Color.LIGHT_GRAY, commentTokens));
         List<Function<String, BracketIndex>> bracketIndexFactories = new ArrayList<>();
         for (String[] bracketTokenPair : bracketPairs)
             bracketIndexFactories.add(code ->
                     new BracketIndex(bracketTokenPair[0],bracketTokenPair[1], lexerFactory.apply(code)));
-        return new CodeDocument(colorRules, bracketIndexFactories);
+        return new CodeDocument(colorRules, lexerFactory, bracketIndexFactories);
     }
 }

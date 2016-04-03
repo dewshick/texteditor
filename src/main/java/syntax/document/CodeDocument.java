@@ -17,12 +17,15 @@ import java.util.stream.Collectors;
  */
 public class CodeDocument extends DefaultStyledDocument {
     public CodeDocument(List<SyntaxColorRule> colorRules,
+                        Function<String, LexerWrapper> lexerFactory,
                         List<Function<String, BracketIndex>> bracketIndexFactories) {
         this.colorRules = colorRules;
         this.bracketIndexFactories = bracketIndexFactories;
+        this.lexerFactory = lexerFactory;
         bracketIndexes = bracketIndexFactories.stream().map(f -> f.apply(allText())).collect(Collectors.toList());
     }
 
+    Function<String, LexerWrapper> lexerFactory;
     List<SyntaxColorRule> colorRules;
     List<Function<String, BracketIndex>> bracketIndexFactories;
     List<BracketIndex> bracketIndexes;
@@ -41,12 +44,13 @@ public class CodeDocument extends DefaultStyledDocument {
 
     private void colorizeText() {
         rebuildBracketIndexes();
-        LexerWrapper lexer = LexerWrapper.javaLexer(allText());
+        LexerWrapper lexer = lexerFactory.apply(allText());
         // todo: use existing coloring & maybe paint tokens only for what's currently displayed
         for (Token t : lexer.tokens()) {
             Color tokenColor = DEFAULT_TOKEN_COLOR;
+            String tokenType = lexer.getTokenType(t);
             for (SyntaxColorRule rule : colorRules) {
-                Optional<Color> maybeColor = rule.getColor(lexer.getTokenType(t));
+                Optional<Color> maybeColor = rule.getColor(tokenType);
                 if (maybeColor.isPresent()) {
                     tokenColor = maybeColor.get();
                     break;
