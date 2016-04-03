@@ -1,4 +1,4 @@
-package syntax;
+package syntax.antlr;
 
 import syntax.antlr.ecmascript.ECMAScriptLexer;
 import syntax.antlr.java.JavaLexer;

@@ -1,6 +1,6 @@
 import static org.junit.Assert.assertEquals;
 import syntax.brackets.BracketIndex;
-import syntax.LexerWrapper;
+import syntax.antlr.LexerWrapper;
 import org.junit.Test;
 
 /**

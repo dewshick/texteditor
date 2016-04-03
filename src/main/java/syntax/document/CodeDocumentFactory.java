@@ -1,7 +1,6 @@
 package syntax.document;
 
-import syntax.LexerWrapper;
-import syntax.SyntaxColorRule;
+import syntax.antlr.LexerWrapper;
 import syntax.brackets.BracketIndex;
 
 import java.awt.*;

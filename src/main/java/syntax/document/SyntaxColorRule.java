@@ -1,4 +1,4 @@
-package syntax;
+package syntax.document;
 
 import java.awt.*;
 import java.lang.reflect.Array;

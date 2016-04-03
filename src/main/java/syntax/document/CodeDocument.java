@@ -1,8 +1,7 @@
 package syntax.document;
 
 import org.antlr.v4.runtime.Token;
-import syntax.LexerWrapper;
-import syntax.SyntaxColorRule;
+import syntax.antlr.LexerWrapper;
 import syntax.brackets.BracketHighlighting;
 import syntax.brackets.BracketIndex;
 

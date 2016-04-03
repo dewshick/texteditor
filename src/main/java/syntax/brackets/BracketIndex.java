@@ -1,6 +1,6 @@
 package syntax.brackets;
 import org.antlr.v4.runtime.Token;
-import syntax.LexerWrapper;
+import syntax.antlr.LexerWrapper;
 
 import java.util.*;
 
