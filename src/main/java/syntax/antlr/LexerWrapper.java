@@ -6,6 +6,7 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
+import syntax.document.SupportedSyntax;
 
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -20,11 +21,24 @@ public class LexerWrapper {
     }
 
     Lexer lexer;
+    String text;
+    SupportedSyntax syntax;
 
-    private LexerWrapper(Lexer l) {
-        lexer = l;
-        l.reset();
-        List <? extends Token> tokens = l.getAllTokens();
+    public LexerWrapper(SupportedSyntax syntax, String code) {
+        init(syntax, code);
+    }
+
+    private void init(SupportedSyntax syntax, String code) {
+        this.syntax = syntax;
+        this.text = code;
+        CharStream cs = new ANTLRInputStream(code);
+
+        switch (syntax) {
+            case ECMASCRIPT: lexer = new ECMAScriptLexer(cs); break;
+            case JAVA: lexer = new ECMAScriptLexer(cs); break;
+        }
+
+        List <? extends Token> tokens = lexer.getAllTokens();
         lexemes = new LinkedList<>();
 
         Iterator<? extends Token> tokenIterator = tokens.iterator();
@@ -51,21 +65,16 @@ public class LexerWrapper {
         return new Lexeme(offset, distanceToNextToken, current.getText().length(), tokenType);
     }
 
-    public void addText(int offset, String text) { }
+    public void addText(int offset, String newText) {
+        init(syntax, text.substring(0, offset) + newText + text.substring(offset));
+    }
 
-    public void removeText(int offset, int length) { }
+    public void removeText(int offset, int length) {
+        init(syntax, text.substring(0, offset) + text.substring(offset + length));
+    }
 
 //  Factory methods
 
-    public static LexerWrapper javaLexer(String input) {
-        CharStream cs = new ANTLRInputStream(input);
-        Lexer lexer = new JavaLexer(cs);
-        return new LexerWrapper(lexer);
-    }
-
-    public static LexerWrapper jsLexer(String input) {
-        CharStream cs = new ANTLRInputStream(input);
-        Lexer lexer = new ECMAScriptLexer(cs);
-        return new LexerWrapper(lexer);
-    }
+    public static LexerWrapper javaLexer(String input) { return new LexerWrapper(SupportedSyntax.JAVA, input); }
+    public static LexerWrapper jsLexer(String input) { return new LexerWrapper(SupportedSyntax.ECMASCRIPT, input); }
 }

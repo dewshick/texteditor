@@ -18,25 +18,27 @@ import java.util.stream.Collectors;
  */
 public class CodeDocument extends DefaultStyledDocument {
     public CodeDocument(List<SyntaxColorRule> colorRules,
-                        Function<String, LexerWrapper> lexerFactory,
+                        LexerWrapper lexer,
                         List<Function<String, BracketIndex>> bracketIndexFactories) {
         this.colorRules = colorRules;
         this.bracketIndexFactories = bracketIndexFactories;
-        this.lexerFactory = lexerFactory;
+        this.lexer= lexer;
         bracketIndexes = bracketIndexFactories.stream().map(f -> f.apply(allText())).collect(Collectors.toList());
     }
 
-    Function<String, LexerWrapper> lexerFactory;
+    LexerWrapper lexer;
     List<SyntaxColorRule> colorRules;
     List<Function<String, BracketIndex>> bracketIndexFactories;
     List<BracketIndex> bracketIndexes;
 
     public void insertString (int offset, String str, AttributeSet a) throws BadLocationException {
         super.insertString(offset, str, a);
+        lexer.addText(offset, str);
         colorizeText();
     }
 
     public void remove (int offs, int len) throws BadLocationException {
+        lexer.removeText(offs, len);
         super.remove(offs, len);
         colorizeText();
     }
@@ -45,7 +47,6 @@ public class CodeDocument extends DefaultStyledDocument {
 
     private void colorizeText() {
         rebuildBracketIndexes();
-        LexerWrapper lexer = lexerFactory.apply(allText());
         // todo: use existing coloring & maybe paint tokens only for what's currently displayed
         for (Lexeme lexeme : lexer.lexemes()) {
             Color tokenColor = DEFAULT_TOKEN_COLOR;

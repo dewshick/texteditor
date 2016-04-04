@@ -22,7 +22,7 @@ public class CodeDocumentFactory {
                 "Identifier",
                 new String[]{ "LINE_COMMENT", "COMMENT" },
                 new String[][]{ { "'('", "')'" }, { "'{'", "'}'" }, {"'['", "']'"} },
-                LexerWrapper::jsLexer);
+                SupportedSyntax.JAVA);
     }
 
     static final String[] JS_KEYWORDS = {"'break'","'do'","'instanceof'","'typeof'","'case'","'else'","'new'","'var'","'catch'","'finally'","'return'","'void'","'continue'","'for'","'switch'","'while'","'debugger'","'function'","'this'","'with'","'default'","'if'","'throw'","'delete'","'in'","'try'","'class'","'enum'","'extends'","'super'","'const'","'export'","'import'","'implements'","'let'","'private'","'public'","'interface'","'package'","'protected'","'static'","'yield'"};
@@ -32,14 +32,14 @@ public class CodeDocumentFactory {
                 "Identifier",
                 new String[]{ "MultiLineComment", "SingleLineComment" },
                 new String[][]{ { "'('", "')'" }, { "'{'", "'}'" }, {"'['", "']'"} },
-                LexerWrapper::jsLexer);
+                SupportedSyntax.ECMASCRIPT);
     }
 
     private static CodeDocument documentForSpecificLanguage(String[] keywordTokens,
                                                             String identifier,
                                                             String[] commentTokens,
                                                             String[][] bracketPairs,
-                                                            Function<String,LexerWrapper> lexerFactory) {
+                                                            SupportedSyntax syntax) {
         List<SyntaxColorRule> colorRules = Arrays.asList(
                 new SyntaxColorRule(Color.BLUE, keywordTokens),
                 new SyntaxColorRule(Color.ORANGE, identifier),
@@ -47,7 +47,7 @@ public class CodeDocumentFactory {
         List<Function<String, BracketIndex>> bracketIndexFactories = new ArrayList<>();
         for (String[] bracketTokenPair : bracketPairs)
             bracketIndexFactories.add(code ->
-                    new BracketIndex(bracketTokenPair[0],bracketTokenPair[1], lexerFactory.apply(code)));
-        return new CodeDocument(colorRules, lexerFactory, bracketIndexFactories);
+                    new BracketIndex(bracketTokenPair[0],bracketTokenPair[1], new LexerWrapper(syntax, code)));
+        return new CodeDocument(colorRules, new LexerWrapper(syntax, ""), bracketIndexFactories);
     }
 }
