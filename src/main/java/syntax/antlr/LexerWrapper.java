@@ -62,7 +62,7 @@ public class LexerWrapper {
         int offset = current.getStartIndex();
         int distanceToNextToken = next == null ? 0 : next.getStartIndex() - offset;
         String tokenType = getTokenType(current);
-        return new Lexeme(offset, distanceToNextToken, current.getText().length(), tokenType);
+        return new Lexeme(offset, distanceToNextToken, current.getText().length(), tokenType, current.getText());
     }
 
     public void addText(int offset, String newText) {

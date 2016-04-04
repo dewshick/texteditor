@@ -20,26 +20,9 @@ public class IncrementalHighlightingTest {
     LexerWrapper initialIndex;
 
     @Test public void isInitialized() { assertEquals(
-            "[{offset=0, distanceToNextToken=14, revision=0, type='MultiLineComment', size=14}, " +
-                    "{offset=14, distanceToNextToken=1, revision=0, type='LineTerminator', size=1}, " +
-                    "{offset=15, distanceToNextToken=12, revision=0, type='SingleLineComment', size=12}, " +
-                    "{offset=27, distanceToNextToken=1, revision=0, type='LineTerminator', size=1}, " +
-                    "{offset=28, distanceToNextToken=6, revision=0, type='Public', size=6}, " +
-                    "{offset=34, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=35, distanceToNextToken=6, revision=0, type='Identifier', size=6}, " +
-                    "{offset=41, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=42, distanceToNextToken=4, revision=0, type='Identifier', size=4}, " +
-                    "{offset=46, distanceToNextToken=1, revision=0, type=''('', size=1}, " +
-                    "{offset=47, distanceToNextToken=1, revision=0, type='')'', size=1}, " +
-                    "{offset=48, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=49, distanceToNextToken=1, revision=0, type=''{'', size=1}, " +
-                    "{offset=50, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=51, distanceToNextToken=6, revision=0, type=''return'', size=6}, " +
-                    "{offset=57, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=58, distanceToNextToken=7, revision=0, type='StringLiteral', size=7}, " +
-                    "{offset=65, distanceToNextToken=1, revision=0, type='';'', size=1}, " +
-                    "{offset=66, distanceToNextToken=1, revision=0, type='WhiteSpaces', size=1}, " +
-                    "{offset=67, distanceToNextToken=0, revision=0, type=''}'', size=1}]",
+            "[{offset=0, distanceToNextToken=14, revision=0, type='MultiLineComment', text='/* whatever */', size=14}, {offset=14, distanceToNextToken=1, revision=0, type='LineTerminator', text='\n" +
+                    "', size=1}, {offset=15, distanceToNextToken=12, revision=0, type='SingleLineComment', text='//whatever()', size=12}, {offset=27, distanceToNextToken=1, revision=0, type='LineTerminator', text='\n" +
+                    "', size=1}, {offset=28, distanceToNextToken=6, revision=0, type='Public', text='public', size=6}, {offset=34, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=35, distanceToNextToken=6, revision=0, type='Identifier', text='String', size=6}, {offset=41, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=42, distanceToNextToken=4, revision=0, type='Identifier', text='test', size=4}, {offset=46, distanceToNextToken=1, revision=0, type=''('', text='(', size=1}, {offset=47, distanceToNextToken=1, revision=0, type='')'', text=')', size=1}, {offset=48, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=49, distanceToNextToken=1, revision=0, type=''{'', text='{', size=1}, {offset=50, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=51, distanceToNextToken=6, revision=0, type=''return'', text='return', size=6}, {offset=57, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=58, distanceToNextToken=7, revision=0, type='StringLiteral', text='\"1 + 1\"', size=7}, {offset=65, distanceToNextToken=1, revision=0, type='';'', text=';', size=1}, {offset=66, distanceToNextToken=1, revision=0, type='WhiteSpaces', text=' ', size=1}, {offset=67, distanceToNextToken=0, revision=0, type=''}'', text='}', size=1}]",
             initialIndex.lexemes().toString()); }
 
     @Test public void isInitializedFromEmptyString() { assertEquals("[]", lexemeIndex("").lexemes().toString()); }
