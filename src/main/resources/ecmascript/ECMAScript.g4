@@ -780,7 +780,7 @@ RegularExpressionLiteral
 
 /// 7.3 Line Terminators
 LineTerminator
- : [\r\n\u2028\u2029] -> channel(HIDDEN)
+ : [\r\n\u2028\u2029]
  ;
 
 OpenBracket                : '[';
@@ -920,7 +920,7 @@ StringLiteral
  ;
 
 WhiteSpaces
- : [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN)
+ : [\t\u000B\u000C\u0020\u00A0]+
  ;
 
 /// 7.4 Comments
