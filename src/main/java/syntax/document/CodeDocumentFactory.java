@@ -25,7 +25,6 @@ public class CodeDocumentFactory {
                 LexerWrapper::jsLexer);
     }
 
-//    for some reason, function keyword in js is recognized as identifier
     static final String[] JS_KEYWORDS = {"'break'","'do'","'instanceof'","'typeof'","'case'","'else'","'new'","'var'","'catch'","'finally'","'return'","'void'","'continue'","'for'","'switch'","'while'","'debugger'","'function'","'this'","'with'","'default'","'if'","'throw'","'delete'","'in'","'try'","'class'","'enum'","'extends'","'super'","'const'","'export'","'import'","'implements'","'let'","'private'","'public'","'interface'","'package'","'protected'","'static'","'yield'"};
     public static CodeDocument forJs() {
         return documentForSpecificLanguage(

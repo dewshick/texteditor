@@ -1,5 +1,6 @@
 package syntax.brackets;
 import org.antlr.v4.runtime.Token;
+import syntax.antlr.Lexeme;
 import syntax.antlr.LexerWrapper;
 
 import java.util.*;
@@ -14,30 +15,27 @@ public class BracketIndex {
         brokenBracesIndex = new HashMap<>();
         correctBracesIndex = new HashMap<>();
 
-        Stack<Token> braces = new Stack<>();
-        for(Token currentToken : lexer.tokens()) {
-            String tokenType = lexer.getTokenType(currentToken);
+        Stack<Lexeme> braces = new Stack<>();
+        for(Lexeme lexeme : lexer.lexemes()) {
+            String tokenType = lexeme.getType();
             if (tokenType.equals(openToken)) {
-                braces.push(currentToken);
+                braces.push(lexeme);
             } else if (tokenType.equals(closeToken)) {
-                int caretHighlightPosition = currentToken.getStopIndex() + 1;
-                if (braces.empty()) { addBracesToIndex(brokenBracesIndex, caretHighlightPosition, currentToken); }
+                int caretHighlightPosition = lexeme.getStopIndex() + 1;
+                if (braces.empty()) { addBracesToIndex(brokenBracesIndex, caretHighlightPosition, lexeme); }
                 else {
-                    Token openingBrace = braces.pop();
-                    addBracesToIndex(correctBracesIndex, caretHighlightPosition, openingBrace, currentToken);
-                    addBracesToIndex(correctBracesIndex, openingBrace.getStartIndex(), openingBrace, currentToken);
+                    Lexeme openingBrace = braces.pop();
+                    addBracesToIndex(correctBracesIndex, caretHighlightPosition, openingBrace, lexeme);
+                    addBracesToIndex(correctBracesIndex, openingBrace.getOffset(), openingBrace, lexeme);
                 }
             }
         }
-        while (!braces.empty()) {
-            Token currentToken = braces.pop();
-            addBracesToIndex(brokenBracesIndex, currentToken.getStartIndex(), currentToken);
-        }
+        braces.forEach(brace -> addBracesToIndex(brokenBracesIndex, brace.getOffset(), brace));
     }
 
-    private void addBracesToIndex(Map<Integer, List<Integer>> index, int position, Token ... braces) {
+    private void addBracesToIndex(Map<Integer, List<Integer>> index, int position, Lexeme ... braces) {
         List<Integer> presentBraces = index.getOrDefault(position, new ArrayList<>());
-        for (Token brace : braces) { presentBraces.add(brace.getStartIndex()); }
+        for (Lexeme brace : braces) { presentBraces.add(brace.getOffset()); }
         index.put(position, presentBraces);
     }
 

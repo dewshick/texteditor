@@ -1,6 +1,7 @@
 package syntax.document;
 
 import org.antlr.v4.runtime.Token;
+import syntax.antlr.Lexeme;
 import syntax.antlr.LexerWrapper;
 import syntax.brackets.BracketHighlighting;
 import syntax.brackets.BracketIndex;
@@ -46,17 +47,16 @@ public class CodeDocument extends DefaultStyledDocument {
         rebuildBracketIndexes();
         LexerWrapper lexer = lexerFactory.apply(allText());
         // todo: use existing coloring & maybe paint tokens only for what's currently displayed
-        for (Token t : lexer.tokens()) {
+        for (Lexeme lexeme : lexer.lexemes()) {
             Color tokenColor = DEFAULT_TOKEN_COLOR;
-            String tokenType = lexer.getTokenType(t);
             for (SyntaxColorRule rule : colorRules) {
-                Optional<Color> maybeColor = rule.getColor(tokenType);
+                Optional<Color> maybeColor = rule.getColor(lexeme.getType());
                 if (maybeColor.isPresent()) {
                     tokenColor = maybeColor.get();
                     break;
                 }
             }
-            setCharacterAttributes(t.getStartIndex(), t.getText().length(), colorAttr(tokenColor), false);
+            setCharacterAttributes(lexeme.getOffset(), lexeme.getSize(), colorAttr(tokenColor), false);
         }
     }
 

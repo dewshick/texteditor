@@ -7,6 +7,8 @@ import org.antlr.v4.runtime.CharStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 
+import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -18,16 +20,42 @@ public class LexerWrapper {
     }
 
     Lexer lexer;
-    List<? extends Token> tokens;
 
     private LexerWrapper(Lexer l) {
         lexer = l;
-        tokens = l.getAllTokens();
+        l.reset();
+        List <? extends Token> tokens = l.getAllTokens();
+        lexemes = new LinkedList<>();
+
+        Iterator<? extends Token> tokenIterator = tokens.iterator();
+        if (tokenIterator.hasNext()) {
+            Token currentToken = tokenIterator.next();
+            Token nextToken;
+            while (tokenIterator.hasNext()) {
+                nextToken = tokenIterator.next();
+                lexemes.add(lexemeFromConsecutiveTokens(currentToken, nextToken));
+                currentToken = nextToken;
+            }
+            lexemes.add(lexemeFromConsecutiveTokens(currentToken, null));
+        }
     }
 
-    public List<? extends Token> tokens() {
-        return tokens;
+    private List<Lexeme> lexemes;
+
+    public List<Lexeme> lexemes() { return lexemes; }
+
+    private Lexeme lexemeFromConsecutiveTokens(Token current, Token next) {
+        int offset = current.getStartIndex();
+        int distanceToNextToken = next == null ? 0 : next.getStartIndex() - offset;
+        String tokenType = getTokenType(current);
+        return new Lexeme(offset, distanceToNextToken, current.getText().length(), tokenType);
     }
+
+    public void addText(int offset, String text) { }
+
+    public void removeText(int offset, int length) { }
+
+//  Factory methods
 
     public static LexerWrapper javaLexer(String input) {
         CharStream cs = new ANTLRInputStream(input);
