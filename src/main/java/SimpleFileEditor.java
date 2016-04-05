@@ -89,28 +89,28 @@ public class SimpleFileEditor extends JPanel {
         editableArea.setText(readDefaultFile());
 
         editableArea.addCaretListener(caretEvent -> {
-            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
-            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());
-
-            Highlighter.HighlightPainter errorBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
-            Highlighter.HighlightPainter correctBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
-
-            Highlighter highlighter = editableArea.getHighlighter();
-            highlighter.removeAllHighlights();
-            try {
-                for (int workingBrace : highlighting.getWorkingBraces())
-                    highlighter.addHighlight(workingBrace, workingBrace + 1, correctBracketsPainter);
-                for (int brokenBrace : highlighting.getBrokenBraces())
-                    highlighter.addHighlight(brokenBrace, brokenBrace + 1, errorBracketsPainter);
-            } catch (BadLocationException e1) {
-                e1.printStackTrace();
-            }
+//            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
+//            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());
+//
+//            Highlighter.HighlightPainter errorBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
+//            Highlighter.HighlightPainter correctBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
+//
+//            Highlighter highlighter = editableArea.getHighlighter();
+//            highlighter.removeAllHighlights();
+//            try {
+//                for (int workingBrace : highlighting.getWorkingBraces())
+//                    highlighter.addHighlight(workingBrace, workingBrace + 1, correctBracketsPainter);
+//                for (int brokenBrace : highlighting.getBrokenBraces())
+//                    highlighter.addHighlight(brokenBrace, brokenBrace + 1, errorBracketsPainter);
+//            } catch (BadLocationException e1) {
+//                e1.printStackTrace();
+//            }
         });
     }
 
     private String readDefaultFile() {
-        String path = "/Users/avyatkin/Desktop/ajax.js";
-//        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
+//        String path = "/Users/avyatkin/Desktop/ajax.js";
+        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
 //        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/syntax/document/CodeDocumentFactory.java";
         try {
             Scanner scanner = new Scanner(new File(path));

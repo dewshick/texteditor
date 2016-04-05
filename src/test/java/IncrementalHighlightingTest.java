@@ -21,9 +21,10 @@ public class IncrementalHighlightingTest {
 
     private LexerWrapper lexemeIndex(String code) { return new LexerWrapper(SupportedSyntax.JAVA, code); }
 
-    @Before public void init() { initialIndex = lexemeIndex(CODE); }
+    @Before public void init() { initialIndex = lexemeIndex(CODE); emptyIndex = lexemeIndex(""); }
 
     LexerWrapper initialIndex;
+    LexerWrapper emptyIndex;
 
     @Test public void isInitialized() { assertEquals(
             "[{offset=0, distanceToNextToken=14, revision=0, type='MultiLineComment', text='/* whatever */', size=14}, {offset=14, distanceToNextToken=1, revision=0, type='LineTerminator', text='\n" +
@@ -36,9 +37,7 @@ public class IncrementalHighlightingTest {
     private void checkIfTextPastedCorrectly(int position, String addedText) {
         initialIndex.addText(position, addedText);
         String newText = CODE.substring(0,position) + addedText + CODE.substring(position);
-        List<Lexeme> expected = lexemeIndex(newText).lexemes();
-        List<Lexeme> actual = initialIndex.lexemes();
-        assertLexemesAreSame(expected, actual);
+        assertLexemesAreCorrect(newText, initialIndex);
     }
 
     private void checkIfTypedTextIsLexedCorrectly(int position, String addedText) {
@@ -48,9 +47,7 @@ public class IncrementalHighlightingTest {
             charPosition++;
         }
         String newText = CODE.substring(0,position) + addedText + CODE.substring(position);
-        List<Lexeme> expected = lexemeIndex(newText).lexemes();
-        List<Lexeme> actual = initialIndex.lexemes();
-        assertLexemesAreSame(expected, actual);
+        assertLexemesAreCorrect(newText, initialIndex);
     }
 
     @Test public void lexemeAddedInBeginning() { checkIfTextPastedCorrectly(0, "public"); }
@@ -59,6 +56,7 @@ public class IncrementalHighlightingTest {
     @Test public void lexemeModifiedViaAddingText() { checkIfTextPastedCorrectly(CODE.indexOf("*/"), "static"); }
     @Test public void lexemeChangedViaAddingText() { checkIfTextPastedCorrectly(CODE.indexOf("public"), "super"); }
     @Test public void commentingTest() { checkIfTextPastedCorrectly(CODE.indexOf("public"), "//"); }
+    @Test public void emptyTextAdded() { checkIfTextPastedCorrectly(0, ""); }
 
     @Test public void lexemeTypedInBeginning() { checkIfTypedTextIsLexedCorrectly(0, "public"); }
     @Test public void lexemeTypedInMiddle() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("String"), "static"); }
@@ -67,25 +65,47 @@ public class IncrementalHighlightingTest {
     @Test public void lexemeTypedAndChangedViaAddingText() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("public"), "super"); }
     @Test public void commentingTypedTest() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("public"), "//"); }
 
-    private void checkIfTextRemovedCorrectly(int position, int length) {
+    private void checkIfTextDeletedCorrectly(int position, int length) {
         initialIndex.removeText(position, length);
         String newText = CODE.substring(0,position) + CODE.substring(length + position);
-        assertLexemesAreSame(initialIndex.lexemes(), lexemeIndex(newText).lexemes());
+        assertLexemesAreCorrect(newText, initialIndex);
     }
 
-    @Test public void lexemeRemovedFromBeginning() { checkIfTextRemovedCorrectly(CODE.indexOf("/*"), 2); }
-    @Test public void uncommenting() { checkIfTextRemovedCorrectly(CODE.indexOf("//"), "//".length()); }
-    @Test public void completeRemoval() { checkIfTextRemovedCorrectly(0, CODE.length()); }
-    @Test public void lexemeAddedViaRemoval() { checkIfTextRemovedCorrectly(CODE.indexOf("\""), 1); }
-    @Test public void lexemeChangedViaRemoval() { checkIfTextRemovedCorrectly(CODE.indexOf("return"), 1); }
-    @Test public void lexemeRemovedViaRemoval() { checkIfTextRemovedCorrectly(CODE.indexOf("return"), "return".length()); }
+    private void checkIfTextBackspacedCorrectly(int position, int length) {
+        for(int caretPosition = position + length - 1; caretPosition >= position; caretPosition--)
+            initialIndex.removeText(caretPosition, 1);
+
+        String newText = CODE.substring(0,position) + CODE.substring(length + position);
+        assertLexemesAreCorrect(newText, initialIndex);
+    }
+
+    @Test public void lexemeDeletedFromBeginning() { checkIfTextDeletedCorrectly(CODE.indexOf("/*"), 2); }
+    @Test public void uncommentingViaDelete() { checkIfTextDeletedCorrectly(CODE.indexOf("//"), "//".length()); }
+    @Test public void completeRemovalViaDelete() { checkIfTextDeletedCorrectly(0, CODE.length()); }
+    @Test public void lexemeAddedViaRemovalViaDelete() { checkIfTextDeletedCorrectly(CODE.indexOf("\""), 1); }
+    @Test public void lexemeChangedViaRemovalViaDelete() { checkIfTextDeletedCorrectly(CODE.indexOf("return"), 1); }
+    @Test public void lexemeRemovedViaDelete() { checkIfTextDeletedCorrectly(CODE.indexOf("return"), "return".length()); }
+    @Test public void emptyTextRemovedCorrectly() { checkIfTextDeletedCorrectly(0, 0); }
+
+    @Test public void lexemeRemovedFromBeginning() { checkIfTextBackspacedCorrectly(CODE.indexOf("/*"), 2); }
+    @Test public void uncommenting() { checkIfTextBackspacedCorrectly(CODE.indexOf("//"), "//".length()); }
+    @Test public void completeRemoval() { checkIfTextBackspacedCorrectly(0, CODE.length()); }
+    @Test public void lexemeAddedViaRemoval() { checkIfTextBackspacedCorrectly(CODE.indexOf("\""), 1); }
+    @Test public void lexemeChangedViaRemoval() { checkIfTextBackspacedCorrectly(CODE.indexOf("return"), 1); }
+    @Test public void lexemeRemovedViaRemoval() { checkIfTextBackspacedCorrectly(CODE.indexOf("return"), "return".length()); }
+
+    @Test public void emptyTextRemovedFromEmptyDocument() {
+        emptyIndex.removeText(0,0);
+        assertLexemesAreCorrect("", emptyIndex);
+    }
+    @Test public void emptyTextAddedToEmptyDocument() {  }
 
     @Test
     public void allCodeChangeTest() {
         String newCode = "public static int whatever() {\n}\n";
         initialIndex.removeText(0, CODE.length());
         initialIndex.addText(0, newCode);
-        assertLexemesAreSame(lexemeIndex(newCode).lexemes(), initialIndex.lexemes());
+        assertLexemesAreCorrect(newCode, initialIndex);
     }
 
     @Test
@@ -94,10 +114,12 @@ public class IncrementalHighlightingTest {
         initialIndex.removeText(0, CODE.length());
         for(int i = 0; i < newCode.length(); i++)
             initialIndex.addText(i, newCode.charAt(i) + "");
-        assertLexemesAreSame(lexemeIndex(newCode).lexemes(), initialIndex.lexemes());
+        assertLexemesAreCorrect(newCode, initialIndex);
     }
 
-    private void assertLexemesAreSame(List<Lexeme> expected, List<Lexeme> actual) {
+    private void assertLexemesAreCorrect(String expectedCodeToLex, LexerWrapper actualL) {
+        List<Lexeme> expected = lexemeIndex(expectedCodeToLex).lexemes();
+        List<Lexeme> actual = actualL.lexemes();
         Function<List<Lexeme>, String> codeFromLexemes = ls -> ls.stream().map(Lexeme::getText).collect(Collectors.joining());
         assertEquals(codeFromLexemes.apply(expected), codeFromLexemes.apply(actual));
         assertEquals(expected, actual);

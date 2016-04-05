@@ -23,24 +23,22 @@ public class CodeDocument extends DefaultStyledDocument {
         this.colorRules = colorRules;
         this.bracketIndexFactories = bracketIndexFactories;
         this.lexer= lexer;
-        bracketIndexes = bracketIndexFactories.stream().map(f -> f.apply(allText())).collect(Collectors.toList());
+//        bracketIndexes = bracketIndexFactories.stream().map(f -> f.apply(allText())).collect(Collectors.toList());
     }
 
     LexerWrapper lexer;
     List<SyntaxColorRule> colorRules;
     List<Function<String, BracketIndex>> bracketIndexFactories;
-    List<BracketIndex> bracketIndexes;
+//    List<BracketIndex> bracketIndexes;
 
     public void insertString (int offset, String str, AttributeSet a) throws BadLocationException {
         super.insertString(offset, str, a);
-        List<Lexeme> updatedLexemes = lexer.addText(offset, str);
-        colorizeText(updatedLexemes);
+        colorizeText(lexer.addText(offset, str));
     }
 
     public void remove (int offs, int len) throws BadLocationException {
-        lexer.removeText(offs, len);
         super.remove(offs, len);
-        colorizeText(lexer.lexemes());
+        colorizeText(lexer.removeText(offs, len));
     }
 
     private static final Color DEFAULT_TOKEN_COLOR = Color.BLACK;
@@ -62,14 +60,14 @@ public class CodeDocument extends DefaultStyledDocument {
     }
 
 //  todo: use single bracket highlighting index instead of all this dances around lists
-    public BracketHighlighting getBracketHighlighting(int caretPosition) {
-        return bracketIndexes.stream().map(idx -> idx.getHighlighting(caretPosition)).
-                reduce((hl1, hl2) -> {
-                    hl1.getBrokenBraces().addAll(hl2.getBrokenBraces());
-                    hl1.getWorkingBraces().addAll(hl2.getWorkingBraces());
-                    return hl1;
-                }).get();
-    }
+//    public BracketHighlighting getBracketHighlighting(int caretPosition) {
+//        return bracketIndexes.stream().map(idx -> idx.getHighlighting(caretPosition)).
+//                reduce((hl1, hl2) -> {
+//                    hl1.getBrokenBraces().addAll(hl2.getBrokenBraces());
+//                    hl1.getWorkingBraces().addAll(hl2.getWorkingBraces());
+//                    return hl1;
+//                }).get();
+//    }
 
     private static final AttributeSet colorAttr(Color color) {
         StyleContext cont = StyleContext.getDefaultStyleContext();
@@ -79,8 +77,8 @@ public class CodeDocument extends DefaultStyledDocument {
 //  todo: use single bracket highlighting index instead of all this dances around lists
 //  todo: use rebuild in index instead of factories stuff
     private void rebuildBracketIndexes() {
-        bracketIndexes = bracketIndexFactories.stream().
-                map(f -> f.apply(allText())).collect(Collectors.toList());
+//        bracketIndexes = bracketIndexFactories.stream().
+//                map(f -> f.apply(allText())).collect(Collectors.toList());
     }
 
     private String allText() {

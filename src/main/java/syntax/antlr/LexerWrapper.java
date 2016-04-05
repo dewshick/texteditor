@@ -69,16 +69,30 @@ public class LexerWrapper {
             oldLexemeIterator.next();
         }
 
-        Lexer updateLexer = updatedCodeLexer(extendedText, lexemes.listIterator(oldLexemeIterator.nextIndex()));
-
-        return new IncrementalRetokenizer(updateLexer,
+        return new IncrementalRetokenizer(extendedText,
                 oldLexemeIterator,
                 updatedLexemeOffset,
                 newText.length()).syncLexemes();
     }
 
-    public void removeText(int offset, int length) {
-        init(syntax, text.substring(0, offset) + text.substring(offset + length));
+    public List<Lexeme> removeText(int offset, int length) {
+        ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
+        if (oldLexemeIterator.hasNext()) {
+            StringBuilder modifiedTextBuilder = new StringBuilder();
+            Lexeme affected = oldLexemeIterator.next();
+            int newLexemesOffset = affected.getOffset();
+            int removedZoneOffset = offset - affected.getOffset();
+            while (affected.getOffset() <= offset + length) {
+                modifiedTextBuilder.append(affected.getText());
+                if (oldLexemeIterator.hasNext()) affected = oldLexemeIterator.next(); else break;
+            }
+            if (affected.getOffset() > offset + length) oldLexemeIterator.previous();
+            String modifiedText = modifiedTextBuilder.toString();
+            modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
+            return new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
+        } else {
+            return new LinkedList<>();
+        }
     }
 
 
@@ -93,28 +107,6 @@ public class LexerWrapper {
             }
         }
         return iterator;
-    }
-
-    private Lexer updatedCodeLexer(String init, Iterator<Lexeme> todo) {
-        Enumeration readersEnum = new Enumeration<InputStream>() {
-            @Override
-            public boolean hasMoreElements() {
-                return todo.hasNext();
-            }
-
-            @Override
-            public InputStream nextElement() {
-                return stringInputStream(todo.next().getText());
-            }
-        };
-
-        SequenceInputStream inputStream = new SequenceInputStream(readersEnum);
-        inputStream = new SequenceInputStream(stringInputStream(init), inputStream);
-        try {
-            return lexerByInputStream(new ANTLRInputStream(inputStream));
-        } catch (IOException e) {
-            throw new RuntimeException(e); //impossible
-        }
     }
 
     private InputStream stringInputStream(String input) {
@@ -132,9 +124,9 @@ public class LexerWrapper {
     }
 
     class IncrementalRetokenizer {
-        IncrementalRetokenizer(Lexer lex, ListIterator<Lexeme> iter, int newOffset, int oldOffset) {
-            updateLexer = lex;
-            oldLexemesIterator = iter;
+        IncrementalRetokenizer(String extendedText, ListIterator<Lexeme> oldLexemesIter, int newOffset, int oldOffset) {
+            updateLexer = updatedCodeLexer(extendedText, lexemes.listIterator(oldLexemesIter.nextIndex()));
+            oldLexemesIterator = oldLexemesIter;
             newLexemeOffset = newOffset;
             oldLexemeOffset = oldOffset;
             lexemesConverged = false;
@@ -204,6 +196,28 @@ public class LexerWrapper {
         private void nextOldLexeme() {
             oldLexeme = oldLexemesIterator.hasNext() ?
                     Optional.of(oldLexemesIterator.next().shift(oldLexemeOffset)) : Optional.empty();
+        }
+
+        private Lexer updatedCodeLexer(String init, Iterator<Lexeme> todo) {
+            Enumeration readersEnum = new Enumeration<InputStream>() {
+                @Override
+                public boolean hasMoreElements() {
+                    return todo.hasNext();
+                }
+
+                @Override
+                public InputStream nextElement() {
+                    return stringInputStream(todo.next().getText());
+                }
+            };
+
+            SequenceInputStream inputStream = new SequenceInputStream(readersEnum);
+            inputStream = new SequenceInputStream(stringInputStream(init), inputStream);
+            try {
+                return lexerByInputStream(new ANTLRInputStream(inputStream));
+            } catch (IOException e) {
+                throw new RuntimeException(e); //impossible
+            }
         }
     }
 }
