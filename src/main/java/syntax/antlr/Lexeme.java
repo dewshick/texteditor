@@ -20,6 +20,10 @@ public class Lexeme {
         return offset;
     }
 
+    public void setOffset(int off) {
+        offset = off;
+    }
+
     public int getDistanceToNextToken() {
         return distanceToNextToken;
     }

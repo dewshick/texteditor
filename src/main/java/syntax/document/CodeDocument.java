@@ -33,22 +33,22 @@ public class CodeDocument extends DefaultStyledDocument {
 
     public void insertString (int offset, String str, AttributeSet a) throws BadLocationException {
         super.insertString(offset, str, a);
-        lexer.addText(offset, str);
-        colorizeText();
+        List<Lexeme> updatedLexemes = lexer.addText(offset, str);
+        colorizeText(updatedLexemes);
     }
 
     public void remove (int offs, int len) throws BadLocationException {
         lexer.removeText(offs, len);
         super.remove(offs, len);
-        colorizeText();
+        colorizeText(lexer.lexemes());
     }
 
     private static final Color DEFAULT_TOKEN_COLOR = Color.BLACK;
 
-    private void colorizeText() {
+    private void colorizeText(List<Lexeme> updatedLexemes) {
         rebuildBracketIndexes();
         // todo: use existing coloring & maybe paint tokens only for what's currently displayed
-        for (Lexeme lexeme : lexer.lexemes()) {
+        for (Lexeme lexeme : updatedLexemes) {
             Color tokenColor = DEFAULT_TOKEN_COLOR;
             for (SyntaxColorRule rule : colorRules) {
                 Optional<Color> maybeColor = rule.getColor(lexeme.getType());

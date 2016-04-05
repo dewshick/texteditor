@@ -2,6 +2,7 @@ package syntax.brackets;
 import org.antlr.v4.runtime.Token;
 import syntax.antlr.Lexeme;
 import syntax.antlr.LexerWrapper;
+import syntax.document.SupportedSyntax;
 
 import java.util.*;
 
@@ -47,7 +48,7 @@ public class BracketIndex {
     HashMap<Integer, List<Integer>> correctBracesIndex;
 
     public static BracketIndex forJavaBraces(String input) {
-        return new BracketIndex("'('", "')'", LexerWrapper.javaLexer(input));
+        return new BracketIndex("'('", "')'", new LexerWrapper(SupportedSyntax.JAVA, input));
     }
 }
 

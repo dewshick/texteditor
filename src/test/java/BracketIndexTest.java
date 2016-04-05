@@ -2,13 +2,14 @@ import static org.junit.Assert.assertEquals;
 import syntax.brackets.BracketIndex;
 import syntax.antlr.LexerWrapper;
 import org.junit.Test;
+import syntax.document.SupportedSyntax;
 
 /**
  * Created by avyatkin on 02/04/16.
  */
 public class BracketIndexTest {
     private BracketIndex bracketIndex(String code) {
-        return new BracketIndex("'('", "')'", LexerWrapper.javaLexer(code));
+        return new BracketIndex("'('", "')'", new LexerWrapper(SupportedSyntax.JAVA, code));
     }
 
     BracketIndex correctBrackets = bracketIndex("()");
