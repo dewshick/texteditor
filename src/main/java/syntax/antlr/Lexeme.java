@@ -20,8 +20,9 @@ public class Lexeme {
         return offset;
     }
 
-    public void setOffset(int off) {
-        offset = off;
+    public Lexeme shift(int off) {
+        offset += off;
+        return this;
     }
 
     public int getDistanceToNextToken() {

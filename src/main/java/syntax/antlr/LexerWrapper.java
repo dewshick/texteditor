@@ -75,7 +75,7 @@ public class LexerWrapper {
         while (oldLexemeIterator.hasNext()) { oldLexemeIterator.next(); oldLexemeIterator.remove(); }
         for(Token t : updateLexer.getAllTokens()) {
             Lexeme l = lexemeFromToken(t);
-            l.setOffset(l.getOffset() + updatedLexemeOffset);
+            l.shift(updatedLexemeOffset);
             newLexemes.add(l);
         }
         newLexemes.forEach(l -> oldLexemeIterator.add(l));
