@@ -33,7 +33,7 @@ public class IncrementalHighlightingTest {
 
     @Test public void isInitializedFromEmptyString() { assertEquals("[]", lexemeIndex("").lexemes().toString()); }
 
-    private void checkIfTextAddedCorrectly(int position, String addedText) {
+    private void checkIfTextPastedCorrectly(int position, String addedText) {
         initialIndex.addText(position, addedText);
         String newText = CODE.substring(0,position) + addedText + CODE.substring(position);
         List<Lexeme> expected = lexemeIndex(newText).lexemes();
@@ -41,12 +41,31 @@ public class IncrementalHighlightingTest {
         assertLexemesAreSame(expected, actual);
     }
 
-    @Test public void lexemeAddedInBeginning() { checkIfTextAddedCorrectly(0, "public"); }
-    @Test public void lexemeAddedInMiddle() { checkIfTextAddedCorrectly(CODE.indexOf("String"), "static"); }
-    @Test public void lexemeAddedInEnd() { checkIfTextAddedCorrectly(CODE.length(), "static"); }
-    @Test public void lexemeModifiedViaAddingText() { checkIfTextAddedCorrectly(CODE.indexOf("*/"), "static"); }
-    @Test public void lexemeChangedViaAddingText() { checkIfTextAddedCorrectly(CODE.indexOf("public"), "super"); }
-    @Test public void commentingTest() { checkIfTextAddedCorrectly(CODE.indexOf("public"), "//"); }
+    private void checkIfTypedTextIsLexedCorrectly(int position, String addedText) {
+        int charPosition = position;
+        for (Character c : addedText.toCharArray()) {
+            initialIndex.addText(charPosition, c.toString());
+            charPosition++;
+        }
+        String newText = CODE.substring(0,position) + addedText + CODE.substring(position);
+        List<Lexeme> expected = lexemeIndex(newText).lexemes();
+        List<Lexeme> actual = initialIndex.lexemes();
+        assertLexemesAreSame(expected, actual);
+    }
+
+    @Test public void lexemeAddedInBeginning() { checkIfTextPastedCorrectly(0, "public"); }
+    @Test public void lexemeAddedInMiddle() { checkIfTextPastedCorrectly(CODE.indexOf("String"), "static"); }
+    @Test public void lexemeAddedInEnd() { checkIfTextPastedCorrectly(CODE.length(), "static"); }
+    @Test public void lexemeModifiedViaAddingText() { checkIfTextPastedCorrectly(CODE.indexOf("*/"), "static"); }
+    @Test public void lexemeChangedViaAddingText() { checkIfTextPastedCorrectly(CODE.indexOf("public"), "super"); }
+    @Test public void commentingTest() { checkIfTextPastedCorrectly(CODE.indexOf("public"), "//"); }
+
+    @Test public void lexemeTypedInBeginning() { checkIfTypedTextIsLexedCorrectly(0, "public"); }
+    @Test public void lexemeTypedInMiddle() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("String"), "static"); }
+    @Test public void lexemeTypedInEnd() { checkIfTypedTextIsLexedCorrectly(CODE.length(), "static"); }
+    @Test public void lexemeTypedAndModifiedViaAddingText() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("*/"), "static"); }
+    @Test public void lexemeTypedAndChangedViaAddingText() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("public"), "super"); }
+    @Test public void commentingTypedTest() { checkIfTypedTextIsLexedCorrectly(CODE.indexOf("public"), "//"); }
 
     private void checkIfTextRemovedCorrectly(int position, int length) {
         initialIndex.removeText(position, length);
@@ -66,7 +85,16 @@ public class IncrementalHighlightingTest {
         String newCode = "public static int whatever() {\n}\n";
         initialIndex.removeText(0, CODE.length());
         initialIndex.addText(0, newCode);
-        assertLexemesAreSame(initialIndex.lexemes(), lexemeIndex(newCode).lexemes());
+        assertLexemesAreSame(lexemeIndex(newCode).lexemes(), initialIndex.lexemes());
+    }
+
+    @Test
+    public void allCodeTypedInTest() {
+        String newCode = "public static int whatever() {\n}\n";
+        initialIndex.removeText(0, CODE.length());
+        for(int i = 0; i < newCode.length(); i++)
+            initialIndex.addText(i, newCode.charAt(i) + "");
+        assertLexemesAreSame(lexemeIndex(newCode).lexemes(), initialIndex.lexemes());
     }
 
     private void assertLexemesAreSame(List<Lexeme> expected, List<Lexeme> actual) {
