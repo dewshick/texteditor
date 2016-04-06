@@ -26,8 +26,8 @@ public class IncrementalHighlightingTest {
         initialIndex = lexemeIndex(code);
     }
 
-    private void initWithEmptyCode() {
-        code = "";
+    private void initWithCode(String initCode) {
+        code = initCode;
         initialIndex = lexemeIndex(code);
     }
 
@@ -100,7 +100,13 @@ public class IncrementalHighlightingTest {
                 initialIndex.lexemes().toString());
     }
     @Test public void initializedFromEmptyString() {
-        initWithEmptyCode();
+        initWithCode("");
+        assertLexemesAreCorrect();
+    }
+
+    @Test public void changeLexemeOnTheEnd() {
+        initWithCode("public");
+        paste(code.length(), "a");
         assertLexemesAreCorrect();
     }
 
@@ -136,6 +142,11 @@ public class IncrementalHighlightingTest {
     @Test public void lexemeChangedViaRemovalViaDelete() { checkIfTextDeletedCorrectly(code.indexOf("return"), 1); }
     @Test public void lexemeRemovedViaDelete() { checkIfTextDeletedCorrectly(code.indexOf("return"), "return".length()); }
     @Test public void emptyTextRemovedCorrectly() { checkIfTextDeletedCorrectly(0, 0); }
+    @Test public void multilineCommentDeletion() {
+        delete(code.indexOf("/*"), 2);
+        delete(code.indexOf("*/"), 2);
+        assertLexemesAreCorrect();
+    }
 
     @Test public void lexemeRemovedFromBeginning() { checkIfTextBackspacedCorrectly(code.indexOf("/*"), 2); }
     @Test public void uncommenting() { checkIfTextBackspacedCorrectly(code.indexOf("//"), "//".length()); }
@@ -143,14 +154,19 @@ public class IncrementalHighlightingTest {
     @Test public void lexemeAddedViaRemoval() { checkIfTextBackspacedCorrectly(code.indexOf("\""), 1); }
     @Test public void lexemeChangedViaRemoval() { checkIfTextBackspacedCorrectly(code.indexOf("return"), 1); }
     @Test public void lexemeRemovedViaRemoval() { checkIfTextBackspacedCorrectly(code.indexOf("return"), "return".length()); }
+    @Test public void multilineCommentRemoval() {
+        backspace(code.indexOf("*/"), 2);
+        backspace(code.indexOf("/*"), 2);
+        assertLexemesAreCorrect();
+    }
 
     @Test public void emptyTextRemovedFromEmptyDocument() {
-        initWithEmptyCode();
+        initWithCode("");
         delete(0, 0);
         assertLexemesAreCorrect();
     }
     @Test public void emptyTextAddedToEmptyDocument() {
-        initWithEmptyCode();
+        initWithCode("");
         paste(0, "");
         assertLexemesAreCorrect();
     }
