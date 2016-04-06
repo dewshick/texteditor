@@ -5,6 +5,7 @@ import syntax.antlr.ecmascript.ECMAScriptLexer;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
+import syntax.antlr.java.JavaLexer;
 import syntax.document.SupportedSyntax;
 import java.io.IOException;
 import java.io.InputStream;
@@ -26,10 +27,6 @@ public class LexerWrapper {
     SupportedSyntax syntax;
 
     public LexerWrapper(SupportedSyntax syntax, String code) {
-        init(syntax, code);
-    }
-
-    private void init(SupportedSyntax syntax, String code) {
         this.syntax = syntax;
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();
@@ -108,7 +105,7 @@ public class LexerWrapper {
             case ECMASCRIPT:
                 return new ECMAScriptLexer(inputStream);
             case JAVA:
-                return new ECMAScriptLexer(inputStream);
+                return new JavaLexer(inputStream);
         }
         throw new RuntimeException("Unknown syntax type: " + syntax); //impossible
     }
