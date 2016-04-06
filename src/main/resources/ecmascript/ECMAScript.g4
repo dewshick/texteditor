@@ -778,6 +778,10 @@ RegularExpressionLiteral
  : {isRegexPossible()}? '/' RegularExpressionBody '/' RegularExpressionFlags
  ;
 
+BrokenRegularExpressionLiteral
+ : {isRegexPossible()}? '/' RegularExpressionBody
+ ;
+
 /// 7.3 Line Terminators
 LineTerminator
  : [\r\n\u2028\u2029]
@@ -919,6 +923,11 @@ StringLiteral
  | '\'' SingleStringCharacter* '\''
  ;
 
+BrokenStringLiteral
+ : '"' DoubleStringCharacter*
+ | '\'' SingleStringCharacter*
+ ;
+
 WhiteSpaces
  : [\t\u000B\u000C\u0020\u00A0]+
  ;
@@ -926,6 +935,10 @@ WhiteSpaces
 /// 7.4 Comments
 MultiLineComment
  : '/*' .*? '*/'
+ ;
+
+BrokenMultiLineComment
+ : '/*' .*?
  ;
 
 SingleLineComment

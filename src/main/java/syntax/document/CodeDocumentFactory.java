@@ -20,7 +20,7 @@ public class CodeDocumentFactory {
         return documentForSpecificLanguage(
                 JAVA_KEYWORDS,
                 "Identifier",
-                new String[]{ "LINE_COMMENT", "COMMENT" },
+                new String[]{ "LINE_COMMENT", "COMMENT", "BROKEN_COMMENT" },
                 new String[][]{ { "'('", "')'" }, { "'{'", "'}'" }, {"'['", "']'"} },
                 SupportedSyntax.JAVA);
     }
@@ -30,7 +30,7 @@ public class CodeDocumentFactory {
         return documentForSpecificLanguage(
                 JS_KEYWORDS,
                 "Identifier",
-                new String[]{ "MultiLineComment", "SingleLineComment" },
+                new String[]{ "MultiLineComment", "SingleLineComment", "BrokenMultiLineComment" },
                 new String[][]{ { "'('", "')'" }, { "'{'", "'}'" }, {"'['", "']'"} },
                 SupportedSyntax.ECMASCRIPT);
     }

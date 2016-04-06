@@ -865,6 +865,11 @@ CharacterLiteral
     |   '\'' EscapeSequence '\''
     ;
 
+BrokenCharacterLiteral
+    :   '\'' SingleCharacter
+    |   '\'' EscapeSequence '\''
+    ;
+
 fragment
 SingleCharacter
     :   ~['\\]
@@ -874,6 +879,10 @@ SingleCharacter
 
 StringLiteral
     :   '"' StringCharacters? '"'
+    ;
+
+BrokenStringLiteral
+    :   '"' StringCharacters?
     ;
 
 fragment
@@ -1014,6 +1023,8 @@ WS  :  [ \t\r\n\u000C]+
 COMMENT
     :   '/*' .*? '*/';
 
+BROKEN_COMMENT
+    :   '/*' .*? '*/';
 
 LINE_COMMENT
     :   '//' ~[\r\n]*;
