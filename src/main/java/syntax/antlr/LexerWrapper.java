@@ -6,7 +6,6 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 import syntax.document.SupportedSyntax;
-
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -17,13 +16,13 @@ import java.util.function.Function;
 /**
  * Created by avyatkin on 01/04/16.
  */
+// TODO rename to LexemeIndex
 public class LexerWrapper {
     public String getTokenType(Token t) {
         return lexer.getVocabulary().getDisplayName(t.getType());
     }
 
     Lexer lexer;
-    String text;
     SupportedSyntax syntax;
 
     public LexerWrapper(SupportedSyntax syntax, String code) {
@@ -32,7 +31,6 @@ public class LexerWrapper {
 
     private void init(SupportedSyntax syntax, String code) {
         this.syntax = syntax;
-        this.text = code;
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();
         lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t)));
@@ -53,20 +51,15 @@ public class LexerWrapper {
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
     public List<Lexeme> addText(int offset, String newText) {
-        text = text.substring(0, offset) + newText + text.substring(offset);
         ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
         String extendedText = newText;
         int updatedLexemeOffset = 0;
         if (oldLexemeIterator.hasNext()) {
-            Lexeme updatedLexeme = oldLexemeIterator.next(); oldLexemeIterator.remove();
+            Lexeme updatedLexeme = oldLexemeIterator.next();
             String oldText = updatedLexeme.getText();
             updatedLexemeOffset = updatedLexeme.getOffset();
             int relativeOffset = offset - updatedLexemeOffset;
             extendedText = oldText.substring(0, relativeOffset) + newText + oldText.substring(relativeOffset);
-        } else if (oldLexemeIterator.hasPrevious()) {
-            Lexeme lastLexeme = oldLexemeIterator.previous();
-            updatedLexemeOffset = lastLexeme.getOffset() + lastLexeme.getDistanceToNextToken();
-            oldLexemeIterator.next();
         }
 
         return new IncrementalRetokenizer(extendedText,
@@ -98,14 +91,11 @@ public class LexerWrapper {
 
     private ListIterator<Lexeme> beforeFirstAffectedLexeme(int offset) {
         ListIterator<Lexeme> iterator = lexemes.listIterator();
-        Lexeme currentLexeme;
-        while (iterator.hasNext()) {
-            currentLexeme = iterator.next();
-            if (currentLexeme.getOffset() + currentLexeme.getDistanceToNextToken() >= offset) {
-                iterator.previous();
-                break;
-            }
-        }
+        if (lexemes.isEmpty()) return iterator;
+        Function<Lexeme, Integer> lexemeEnd = lx -> lx.getOffset() + lx.getDistanceToNextToken();
+        Lexeme currentLexeme = iterator.next();
+        while (iterator.hasNext() && lexemeEnd.apply(currentLexeme) < offset) currentLexeme = iterator.next();
+        iterator.previous();
         return iterator;
     }
 
@@ -132,6 +122,7 @@ public class LexerWrapper {
             lexemesConverged = false;
             nextOldLexeme();
             nextUpdatedLexeme();
+            newLexemes = new ArrayList<>();
         }
 
         private Lexer updateLexer;
@@ -141,23 +132,31 @@ public class LexerWrapper {
         private boolean lexemesConverged;
         private Optional<Lexeme> oldLexeme;
         private Optional<Lexeme> newLexeme;
+        List<Lexeme> newLexemes;
 
         public List<Lexeme> syncLexemes() {
-            List<Lexeme> newLexemes = new ArrayList<>();
-
             while (oldLexeme.isPresent() && newLexeme.isPresent()) {
                 while (oldLexeme.get().getOffset() < newLexeme.get().getOffset())
                     nextOldLexeme();
+                newLexemes.add(newLexeme.get());
                 if (oldLexeme.get().equals(newLexeme.get())) {
-                    newLexemes.add(newLexeme.get());
                     lexemesConverged = true;
                     break;
-                } else {
-                    newLexemes.add(newLexeme.get());
-                    nextUpdatedLexeme();
-                }
+                } else nextUpdatedLexeme();
             }
+            removeOverlappingOldLexemesBeforeIterator();
 
+            if (!lexemesConverged) {
+                removeOldLexemesAfterIterator();
+                processRemainingNewLexemes();
+            }
+            newLexemes.forEach(oldLexemesIterator::add);
+            oldLexemesIterator.forEachRemaining(lexeme -> lexeme.shift(oldLexemeOffset));
+
+            return newLexemes;
+        }
+
+        private void removeOverlappingOldLexemesBeforeIterator() {
             while (oldLexemesIterator.hasPrevious()) {
                 Lexeme previousLexeme = oldLexemesIterator.previous();
                 if (previousLexeme.getOffset() >= newLexemeOffset)
@@ -167,24 +166,20 @@ public class LexerWrapper {
                     break;
                 }
             }
+        }
 
-            if (!lexemesConverged) {
-                if (oldLexeme.isPresent()) {
-                    while (oldLexemesIterator.hasNext()) {
-                        oldLexemesIterator.next();
-                        oldLexemesIterator.remove();
-                    }
-                } else {
-                    while (newLexeme.isPresent()) {
-                        newLexemes.add(newLexeme.get());
-                        nextUpdatedLexeme();
-                    }
-                }
+        private void processRemainingNewLexemes() {
+            while (newLexeme.isPresent()) {
+                newLexemes.add(newLexeme.get());
+                nextUpdatedLexeme();
             }
-            newLexemes.forEach(oldLexemesIterator::add);
-            oldLexemesIterator.forEachRemaining(lexeme -> lexeme.shift(oldLexemeOffset));
+        }
 
-            return newLexemes;
+        private void removeOldLexemesAfterIterator() {
+            while (oldLexemesIterator.hasNext()) {
+                oldLexemesIterator.next();
+                oldLexemesIterator.remove();
+            }
         }
 
         private void nextUpdatedLexeme() {
