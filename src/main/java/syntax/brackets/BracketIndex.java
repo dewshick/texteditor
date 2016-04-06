@@ -1,5 +1,4 @@
 package syntax.brackets;
-import org.antlr.v4.runtime.Token;
 import syntax.antlr.Lexeme;
 import syntax.antlr.LexerWrapper;
 import syntax.document.SupportedSyntax;

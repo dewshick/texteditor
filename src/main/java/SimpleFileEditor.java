@@ -1,7 +1,4 @@
-import syntax.brackets.BracketHighlighting;
-import syntax.document.CodeDocument;
 import syntax.document.CodeDocumentFactory;
-import javax.swing.text.*;
 import java.io.*;
 import java.awt.*;
 import java.util.Scanner;

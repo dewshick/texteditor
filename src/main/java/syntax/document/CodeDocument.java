@@ -1,9 +1,7 @@
 package syntax.document;
 
-import org.antlr.v4.runtime.Token;
 import syntax.antlr.Lexeme;
 import syntax.antlr.LexerWrapper;
-import syntax.brackets.BracketHighlighting;
 import syntax.brackets.BracketIndex;
 
 import javax.swing.text.*;
@@ -11,7 +9,6 @@ import java.awt.*;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 /**
  * Created by avyatkin on 01/04/16.
