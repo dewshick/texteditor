@@ -17,8 +17,7 @@ import java.util.function.Function;
 /**
  * Created by avyatkin on 01/04/16.
  */
-// TODO rename to LexemeIndex
-public class LexerWrapper {
+public class LexemeIndex {
     public String getTokenType(Token t) {
         return lexer.getVocabulary().getDisplayName(t.getType());
     }
@@ -26,7 +25,7 @@ public class LexerWrapper {
     Lexer lexer;
     SupportedSyntax syntax;
 
-    public LexerWrapper(SupportedSyntax syntax, String code) {
+    public LexemeIndex(SupportedSyntax syntax, String code) {
         this.syntax = syntax;
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();

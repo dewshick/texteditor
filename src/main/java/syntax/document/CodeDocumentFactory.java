@@ -1,6 +1,6 @@
 package syntax.document;
 
-import syntax.antlr.LexerWrapper;
+import syntax.antlr.LexemeIndex;
 import syntax.brackets.BracketIndex;
 
 import java.awt.*;
@@ -47,7 +47,7 @@ public class CodeDocumentFactory {
         List<Function<String, BracketIndex>> bracketIndexFactories = new ArrayList<>();
         for (String[] bracketTokenPair : bracketPairs)
             bracketIndexFactories.add(code ->
-                    new BracketIndex(bracketTokenPair[0],bracketTokenPair[1], new LexerWrapper(syntax, code)));
-        return new CodeDocument(colorRules, new LexerWrapper(syntax, ""), bracketIndexFactories);
+                    new BracketIndex(bracketTokenPair[0],bracketTokenPair[1], new LexemeIndex(syntax, code)));
+        return new CodeDocument(colorRules, new LexemeIndex(syntax, ""), bracketIndexFactories);
     }
 }

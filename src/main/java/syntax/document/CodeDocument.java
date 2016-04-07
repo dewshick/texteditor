@@ -1,7 +1,7 @@
 package syntax.document;
 
 import syntax.antlr.Lexeme;
-import syntax.antlr.LexerWrapper;
+import syntax.antlr.LexemeIndex;
 import syntax.brackets.BracketIndex;
 
 import javax.swing.text.*;
@@ -15,7 +15,7 @@ import java.util.function.Function;
  */
 public class CodeDocument extends DefaultStyledDocument {
     public CodeDocument(List<SyntaxColorRule> colorRules,
-                        LexerWrapper lexer,
+                        LexemeIndex lexer,
                         List<Function<String, BracketIndex>> bracketIndexFactories) {
         this.colorRules = colorRules;
         this.bracketIndexFactories = bracketIndexFactories;
@@ -23,7 +23,7 @@ public class CodeDocument extends DefaultStyledDocument {
 //        bracketIndexes = bracketIndexFactories.stream().map(f -> f.apply(allText())).collect(Collectors.toList());
     }
 
-    LexerWrapper lexer;
+    LexemeIndex lexer;
     List<SyntaxColorRule> colorRules;
     List<Function<String, BracketIndex>> bracketIndexFactories;
 //    List<BracketIndex> bracketIndexes;

@@ -1,6 +1,6 @@
 package syntax.brackets;
 import syntax.antlr.Lexeme;
-import syntax.antlr.LexerWrapper;
+import syntax.antlr.LexemeIndex;
 import syntax.document.SupportedSyntax;
 
 import java.util.*;
@@ -11,7 +11,7 @@ import java.util.*;
 // currently we highlight only single brackets
 // get rid of boxed lists since it's overkill for memory
 public class BracketIndex {
-    public BracketIndex(String openToken, String closeToken, LexerWrapper lexer) {
+    public BracketIndex(String openToken, String closeToken, LexemeIndex lexer) {
         brokenBracesIndex = new HashMap<>();
         correctBracesIndex = new HashMap<>();
 
@@ -47,7 +47,7 @@ public class BracketIndex {
     HashMap<Integer, List<Integer>> correctBracesIndex;
 
     public static BracketIndex forJavaBraces(String input) {
-        return new BracketIndex("'('", "')'", new LexerWrapper(SupportedSyntax.JAVA, input));
+        return new BracketIndex("'('", "')'", new LexemeIndex(SupportedSyntax.JAVA, input));
     }
 }
 

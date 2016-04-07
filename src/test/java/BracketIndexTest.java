@@ -1,6 +1,6 @@
 import static org.junit.Assert.assertEquals;
 import syntax.brackets.BracketIndex;
-import syntax.antlr.LexerWrapper;
+import syntax.antlr.LexemeIndex;
 import org.junit.Test;
 import syntax.document.SupportedSyntax;
 
@@ -9,7 +9,7 @@ import syntax.document.SupportedSyntax;
  */
 public class BracketIndexTest {
     private BracketIndex bracketIndex(String code) {
-        return new BracketIndex("'('", "')'", new LexerWrapper(SupportedSyntax.JAVA, code));
+        return new BracketIndex("'('", "')'", new LexemeIndex(SupportedSyntax.JAVA, code));
     }
 
     BracketIndex correctBrackets = bracketIndex("()");
