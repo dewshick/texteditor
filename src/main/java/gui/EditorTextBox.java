@@ -10,7 +10,7 @@ import java.util.List;
 /**
  * Created by avyatkin on 06/04/16.
  */
-public class EditorTextBox extends JComponent // implements Scrollable, Accessible
+public class EditorTextBox extends JComponent //implements Scrollable // , Accessible
 {
     String text;
     List<String> lines;
@@ -34,7 +34,7 @@ public class EditorTextBox extends JComponent // implements Scrollable, Accessib
 
     public void setEditable(boolean editable) { this.editable = editable; }
 
-    private static Font codeFont = new Font("Monospaced", Font.BOLD | Font.ITALIC, 36);
+//    private static Font codeFont = new Font("Monospaced", Font.BOLD | Font.ITALIC, 36);
 
     public void paint(Graphics g) {
         super.paintComponent(g);
@@ -44,34 +44,44 @@ public class EditorTextBox extends JComponent // implements Scrollable, Accessib
         for (String line: lines) {
             g.drawString(line, xOffset, yOffset);
             yOffset += 20;
-//            xOffset += 10;
             if (xOffset > clip.height)
                 break;
         }
 
     }
 
-    public Dimension getPreferredSize() {
-        return new Dimension(400,400);
-    }
-    public Dimension getMinimumSize() {
-        return getPreferredSize();
-    }
-    public Dimension getMaximumSize() {
-        return getPreferredSize();
-    }
-}
 
-//class TestFrame extends JFrame {
-//    public static void main( String args[] ) {
-//        JPanel buttonPanel = new JPanel();
-//        buttonPanel.add(new JButton("11"));
-//        buttonPanel.add(new JButton("12"));
-//
-//        TestFrame mainFrame = new TestFrame();
-//        mainFrame.add(new EditorTextBox());
-//        mainFrame.pack();
-//        mainFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-//        mainFrame.setVisible( true );
+    static final Dimension DEFAULT_SIZE = new Dimension(400,400);
+
+    public Dimension getPreferredSize() {
+        Dimension d = super.getPreferredSize();
+        d = (d == null) ? DEFAULT_SIZE : d;
+        return d;
+    }
+
+
+//    @Override
+//    public Dimension getPreferredScrollableViewportSize() {
+//        return null;
 //    }
-//}
+//
+//    @Override
+//    public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        return 0;
+//    }
+//
+//    @Override
+//    public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
+//        return 0;
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportWidth() {
+//        return false;
+//    }
+//
+//    @Override
+//    public boolean getScrollableTracksViewportHeight() {
+//        return false;
+//    }
+}
