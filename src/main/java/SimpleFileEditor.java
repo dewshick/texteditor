@@ -1,3 +1,4 @@
+import gui.EditorTextBox;
 import syntax.document.CodeDocumentFactory;
 import java.io.*;
 import java.awt.*;
@@ -7,12 +8,12 @@ import javax.swing.SwingUtilities;
 
 public class SimpleFileEditor extends JPanel {
 
-    JTextPane editableArea;
+    EditorTextBox editableArea;
 
-    private static final JTextPane initEditableArea() {
+    private static final EditorTextBox initEditableArea() {
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
-        JTextPane editableArea = new JTextPane(CodeDocumentFactory.forJs());
-        editableArea.setMargin(TEXT_AREA_MARGIN);
+        EditorTextBox editableArea = new EditorTextBox(CodeDocumentFactory.forJs());
+//        editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
 
@@ -22,7 +23,7 @@ public class SimpleFileEditor extends JPanel {
     JButton openButton;
     JButton saveButton;
 
-    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextPane editableArea) {
+    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorTextBox editableArea) {
         JButton openButton = new JButton("Open a File...");
         openButton.addActionListener((event) -> {
             int returnVal = fileChooser.showOpenDialog(fileEditor);
@@ -48,7 +49,7 @@ public class SimpleFileEditor extends JPanel {
         return openButton;
     }
 
-    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, JTextPane editableArea) {
+    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorTextBox editableArea) {
         JButton saveButton = new JButton("Save changes");
         saveButton.addActionListener((event) -> {
             int returnVal = fileChooser.showSaveDialog(fileEditor);
@@ -63,7 +64,7 @@ public class SimpleFileEditor extends JPanel {
                     editableArea.setEditable(false);
                 }
             }
-            editableArea.setCaretPosition(editableArea.getDocument().getLength());
+//            editableArea.setCaretPosition(editableArea.getDocument().getLength());
         });
         return saveButton;
 
@@ -85,7 +86,7 @@ public class SimpleFileEditor extends JPanel {
         add(editScrollPane, BorderLayout.CENTER);
         editableArea.setText(readDefaultFile());
 
-        editableArea.addCaretListener(caretEvent -> {
+//        editableArea.addCaretListener(caretEvent -> {
 //            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
 //            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());
 //
@@ -102,12 +103,12 @@ public class SimpleFileEditor extends JPanel {
 //            } catch (BadLocationException e1) {
 //                e1.printStackTrace();
 //            }
-        });
+//        });
     }
 
     private String readDefaultFile() {
-//        String path = "/Users/avyatkin/Desktop/ajax.js";
-        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
+        String path = "/Users/avyatkin/Desktop/ajax.js";
+//        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
 //        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/syntax/document/CodeDocumentFactory.java";
         try {
             Scanner scanner = new Scanner(new File(path));
