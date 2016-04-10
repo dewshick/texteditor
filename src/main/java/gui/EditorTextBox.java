@@ -16,11 +16,13 @@ public class EditorTextBox extends JComponent implements Scrollable // , Accessi
     String text;
     List<String> lines;
     boolean editable;
+    Caret caret;
 
     public EditorTextBox(Document doc) {
         text = "";
         lines = new TreeList<>();
         editable = true;
+        caret = new Caret();
         updatePreferredSize();
     }
 
@@ -103,6 +105,10 @@ public class EditorTextBox extends JComponent implements Scrollable // , Accessi
         }
     }
 
+    private Point absoluteCoords(Point point) {
+        return new Point(point.x * fontWidth(), point.y * fontHeight());
+    }
+
     private void updatePreferredSize() {
         int width = lines.stream().map(this::stringWidth).reduce(0, Integer::max);
         int height = lines.size() * fontHeight();
@@ -112,8 +118,9 @@ public class EditorTextBox extends JComponent implements Scrollable // , Accessi
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
         g.setFont(FONT);
-        g.setColor(Color.blue);
-        g.fillRect(0,0,100,100);
+        g.setColor(Color.black);
+
+        caret.renderCaret(g);
         Rectangle clip = g.getClipBounds();
         g.setColor(Color.black);
 
@@ -128,6 +135,31 @@ public class EditorTextBox extends JComponent implements Scrollable // , Accessi
         }
     }
 
+    class Caret {
+        Caret() {
+            relativePosition = new Point(0, 0);
+        }
+
+        private Point getAbsolutePosition() {
+            return absoluteCoords(relativePosition);
+        }
+
+        public void setRelativePosition(Point relativePosition) {
+            this.relativePosition = relativePosition;
+        }
+
+        Point relativePosition;
+
+        Rectangle caretRect() { return new Rectangle(getAbsolutePosition().x, getAbsolutePosition().y, 2, fontHeight()); }
+
+        void renderCaret(Graphics g) {
+            g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
+        }
+
+        void replace(Point place) {
+
+        }
+    }
     /**
      *
      *
