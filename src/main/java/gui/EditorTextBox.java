@@ -30,7 +30,7 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
         grabFocus();
         setDoubleBuffered(true);
         addFocusRelatedListeners();
-        addCaretMovementsListeners();
+        addCaretMovementsActions();
     }
 
     public String getText() { return text; }
@@ -162,28 +162,38 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
 
     private int lastLine() { return lines.size() - 1; }
 
-    enum CaretDirection { UP, DOWN, LEFT, RIGHT }
+    enum CaretDirection {
+        UP, DOWN, LEFT, RIGHT;
 
-    private void addCaretMovementsListeners() {
-        addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                switch (e.getKeyCode()) {
-                    case KeyEvent.VK_UP:
-                        caret.move(CaretDirection.UP);
-                        break;
-                    case KeyEvent.VK_DOWN:
-                        caret.move(CaretDirection.DOWN);
-                        break;
-                    case KeyEvent.VK_LEFT:
-                        caret.move(CaretDirection.LEFT);
-                        break;
-                    case KeyEvent.VK_RIGHT:
-                        caret.move(CaretDirection.RIGHT);
-                        break;
-                }
+        int getKeyCode() { return getCorrectOne(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT);}
+
+        String getActionName() { return getCorrectOne("CaretUp", "CaretDown", "CaretLeft", "CaretRight"); }
+
+        private <T> T getCorrectOne(T up, T down, T left, T right) {
+            switch (this) {
+                case UP: return up;
+                case DOWN: return down;
+                case LEFT: return left;
+                case RIGHT: return right;
             }
-        });
+            throw new RuntimeException("Missing caret direction!");
+        }
+    }
+
+    private void addCaretMovementsActions() {
+        Arrays.asList(CaretDirection.values()).forEach(
+                caretDir -> {
+                    getInputMap().put(
+                            KeyStroke.getKeyStroke(caretDir.getKeyCode() ,0),
+                            caretDir.getActionName());
+
+                    getActionMap().put(caretDir.getActionName(), new AbstractAction() {
+                        @Override
+                        public void actionPerformed(ActionEvent e) {
+                            caret.move(caretDir);
+                        }
+                    });
+                });
     }
 
     class Caret {
