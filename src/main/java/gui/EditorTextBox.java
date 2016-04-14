@@ -226,7 +226,10 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
                 case RIGHT: horizontalMove(1);
                     break;
             }
-            if (previousPosition != relativePosition) repaint();
+            if (previousPosition != relativePosition) {
+                scrollRectToVisible(caretRect());
+                repaint();
+            }
         }
 
         private void verticalMove(int direction) {
