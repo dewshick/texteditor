@@ -144,15 +144,28 @@ public class TextEditorTest {
     }
 
     @Test
-    public void addNewlineInTehEnd() {
+    public void rmNewlineFromEnd() {
         pasteText(new Point("thirdline endofthirdline".length(), 2), "\n");
+        deleteText(new Point("thirdline endofthirdline".length(), 2), 1);
         assertStateIsCorrect();
     }
 
     @Test
-    public void rmNewlineFromEnd() {
+    public void addNewlineInTheBeginning() {
+        pasteText(new Point(0, 0), "\n");
+        assertStateIsCorrect();
+    }
+
+    @Test
+    public void addNewlineInTheMiddle() {
+        pasteText(new Point(0, 1), "\n");
+        pasteText(new Point(0, 1), "\n");
+        assertStateIsCorrect();
+    }
+
+    @Test
+    public void addNewlineInTehEnd() {
         pasteText(new Point("thirdline endofthirdline".length(), 2), "\n");
-        deleteText(new Point("thirdline endofthirdline".length(), 2), 1);
         assertStateIsCorrect();
     }
 

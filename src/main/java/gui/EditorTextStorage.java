@@ -4,6 +4,7 @@ import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
 import java.awt.geom.Rectangle2D;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.ListIterator;
@@ -98,11 +99,16 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
-//    helper method
+//    correct string-split
     private static List<String> buildLinesList(String str) {
-        List<String> result = new TreeList<>(Arrays.asList(str.split("\n")));
-        if (str.length() > 0 && str.charAt(str.length() -1) == '\n')
-            result.add("");
+        int initialIndex = 0;
+        List<String> result = new ArrayList<>();
+        for (int i = 0; i < str.length(); i++)
+            if (str.charAt(i) == '\n') {
+                result.add(str.substring(initialIndex, i));
+                initialIndex = i+1;
+            }
+        result.add(str.substring(initialIndex));
         return result;
     }
 }

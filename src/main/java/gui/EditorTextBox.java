@@ -2,6 +2,7 @@ package gui;
 
 import javax.swing.*;
 import javax.swing.text.Document;
+import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
@@ -26,7 +27,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
         grabFocus();
         setDoubleBuffered(true);
         addFocusRelatedListeners();
-        addCaretMovementsActions();
+        addCaretRelatedActions();
     }
 
     public void setEditable(boolean editable) { this.editable = editable; }
@@ -148,13 +149,15 @@ public class EditorTextBox extends JComponent implements Scrollable {
         }
     }
 
-    private void addCaretMovementsActions() {
+    List<Integer> ignoredKeys = Arrays.asList(KeyEvent.VK_DELETE, KeyEvent.VK_BACK_SPACE);
+
+    private void addCaretRelatedActions() {
         Arrays.asList(CaretDirection.values()).forEach(
                 caretDir -> bindKeyToAction(caretDir.getKeyCode(), new AbstractAction() {
                     @Override public void actionPerformed(ActionEvent e) { caret.move(caretDir); }
                 }));
 
-        bindKeyToAction(KeyEvent.VK_ENTER, new AbstractAction() {
+        bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!caret.relativePosition.equals(textStorage.endOfText())) {
@@ -172,6 +175,15 @@ public class EditorTextBox extends JComponent implements Scrollable {
                     textStorage.removeText(caret.positionAfterCaret(), 1);
                     repaint();
                 }
+            }
+        });
+
+        addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyTyped(KeyEvent e) {
+                if (e.isActionKey() || ignoredKeys.indexOf(e.getExtendedKeyCode()) != -1) return;
+                textStorage.addText(caret.relativePosition, e.getKeyChar() + "");
+                caret.move(CaretDirection.RIGHT);
             }
         });
     }
@@ -196,8 +208,6 @@ public class EditorTextBox extends JComponent implements Scrollable {
             int yCoord = getAbsolutePosition().y + (fontHeight() - fontMetrics().getAscent());
             return new Rectangle(getAbsolutePosition().x, yCoord, 2, fontHeight());
         }
-
-        Point positionBeforeCaret() { return textStorage.horizontalMove(relativePosition, -1); }
 
         void renderCaret(Graphics g) {
             g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
