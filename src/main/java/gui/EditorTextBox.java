@@ -210,16 +210,21 @@ public class EditorTextBox extends JComponent implements Scrollable {
         bindKeyToAction(KeyEvent.VK_ENTER, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                removeText(caret.positionAfterCaret(),1);
-                repaint();
+                if (!caret.relativePosition.equals(new Point(lines.get(lastLine()).length(),lastLine()))) {
+                    removeText(caret.positionAfterCaret(), 1);
+                    repaint();
+                }
             }
         });
 
         bindKeyToAction(KeyEvent.VK_BACK_SPACE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                removeText(caret.positionBeforeCaret(),1);
-                repaint();
+                if (!caret.relativePosition.equals(new Point(0,0))) {
+                    caret.move(CaretDirection.LEFT);
+                    removeText(caret.positionAfterCaret(), 1);
+                    repaint();
+                }
             }
         });
     }
@@ -281,8 +286,19 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
         private Point horizontalMove(Point position, int direction) {
             String currentLine = lines.get(position.y);
-            int newX = Math.min(Math.max(0, position.x + direction), currentLine.length());
-            return new Point(newX, position.y);
+            int newY = position.y;
+            int newX = position.x + direction;
+            if (newX > currentLine.length()) {
+                if (newY >= lastLine()) return position;
+                else return new Point(0, position.y + 1);
+            } else if (newX < 0) {
+                if (newY == 0) return position;
+                else {
+                    newY--;
+                    return new Point(lines.get(newY).length(), newY);
+                }
+            }
+            return new Point(newX, newY);
         }
     }
 
