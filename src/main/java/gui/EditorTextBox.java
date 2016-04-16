@@ -40,7 +40,8 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
     private List<String> buildLinesList(String str) {
         List<String> result = new TreeList<>(Arrays.asList(str.split("\n")));
-        if (str.charAt(str.length() -1) == '\n') result.add("");
+        if (str.length() > 0 && str.charAt(str.length() -1) == '\n')
+            result.add("");
         return result;
     }
 
@@ -48,7 +49,6 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
     /**
      * Edit text
-     * TODO: test it!
      */
 
     public void addText(Point position, String text) {
@@ -207,14 +207,20 @@ public class EditorTextBox extends JComponent implements Scrollable {
                     @Override public void actionPerformed(ActionEvent e) { caret.move(caretDir); }
                 }));
 
-        bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
+        bindKeyToAction(KeyEvent.VK_ENTER, new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) { removeText(caret.positionAfterCaret(),1); }
+            public void actionPerformed(ActionEvent e) {
+                removeText(caret.positionAfterCaret(),1);
+                repaint();
+            }
         });
 
         bindKeyToAction(KeyEvent.VK_BACK_SPACE, new AbstractAction() {
             @Override
-            public void actionPerformed(ActionEvent e) { removeText(caret.positionBeforeCaret(),1); }
+            public void actionPerformed(ActionEvent e) {
+                removeText(caret.positionBeforeCaret(),1);
+                repaint();
+            }
         });
     }
 
