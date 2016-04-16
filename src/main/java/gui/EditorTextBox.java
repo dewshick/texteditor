@@ -1,7 +1,6 @@
 package gui;
 
 import org.apache.commons.collections4.list.TreeList;
-
 import javax.accessibility.Accessible;
 import javax.swing.*;
 import javax.swing.text.Document;
@@ -9,19 +8,18 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.ListIterator;
 
 /**
  * Created by avyatkin on 06/04/16.
  */
-public class EditorTextBox extends JComponent implements Scrollable, Accessible
-{
+public class EditorTextBox extends JComponent implements Scrollable {
     String text;
     List<String> lines;
     boolean editable;
     Caret caret;
 
     public EditorTextBox(Document doc) {
-        text = "";
         lines = new TreeList<>();
         lines.add("");
         editable = true;
@@ -33,26 +31,60 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
         addCaretMovementsActions();
     }
 
-    public String getText() { return text; }
+    public String getText() { return String.join("\n", lines); }
 
     public void setText(String text) {
-        this.text = text;
-        this.lines = new TreeList<>(Arrays.asList(text.split("\n")));
+        this.lines = buildLinesList(text);
         updatePreferredSize();
     }
 
-    public boolean isEditable() { return editable; }
+    private List<String> buildLinesList(String str) {
+        List<String> result = new TreeList<>(Arrays.asList(str.split("\n")));
+        if (str.charAt(str.length() -1) == '\n') result.add("");
+        return result;
+    }
 
     public void setEditable(boolean editable) { this.editable = editable; }
+
+    /**
+     * Edit text
+     * TODO: test it!
+     */
+
+    public void addText(Point position, String text) {
+        ListIterator<String> iter = lines.listIterator(position.y);
+        List<String> newLines;
+        if (iter.hasNext()) {
+            String updatedLine = iter.next();
+            newLines = buildLinesList(updatedLine.substring(0, position.x) + text + updatedLine.substring(position.x));
+            iter.remove();
+        } else
+            newLines = buildLinesList(text);
+        newLines.forEach(iter::add);
+    }
+
+    public void removeText(Point position, int length) {
+        ListIterator<String> iter = lines.listIterator(position.y);
+        StringBuilder affectedString = new StringBuilder();
+        if (iter.hasNext()) {
+            affectedString.append(iter.next());
+            iter.remove();
+            while (iter.hasNext() && position.x + length > affectedString.length()) {
+                affectedString.append("\n").append(iter.next());
+                iter.remove();
+            }
+        }
+        String old = affectedString.toString();
+        String updated = old.substring(0, position.x) + old.substring(position.x + length);
+        buildLinesList(updated).forEach(iter::add);
+    }
 
     /**
      * Scrollable implementation
      */
 
     @Override
-    public Dimension getPreferredScrollableViewportSize() {
-        return getPreferredSize();
-    }
+    public Dimension getPreferredScrollableViewportSize() { return getPreferredSize(); }
 
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
@@ -65,14 +97,10 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
     }
 
     @Override
-    public boolean getScrollableTracksViewportWidth() {
-        return false;
-    }
+    public boolean getScrollableTracksViewportWidth() { return false; }
 
     @Override
-    public boolean getScrollableTracksViewportHeight() {
-        return false;
-    }
+    public boolean getScrollableTracksViewportHeight() { return false; }
 
     private int getValueForOrientation(int orientation, int horizontal, int vertical) {
         switch (orientation) {
@@ -112,9 +140,7 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
         }
     }
 
-    private Point absoluteCoords(Point point) {
-        return new Point(point.x * fontWidth(), point.y * fontHeight());
-    }
+    private Point absoluteCoords(Point point) { return new Point(point.x * fontWidth(), point.y * fontHeight()); }
 
     private void updatePreferredSize() {
 //        TODO: do not scan all the every time, store them in heap or hash by their length or something
@@ -136,7 +162,7 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
         int yOffset = fontHeight();
 
 //        TODO: render exact sublist of lines instead of iterating over whole list(faster and cleaner)
-        for (String line: lines) {
+        for (String line : lines) {
             if (yOffset >= clip.y) g.drawString(stringInBounds(line, clip), xOffset, yOffset);
             yOffset += fontHeight();
             if (yOffset > clip.height + clip.y) break;
@@ -149,10 +175,7 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
 
     private void addFocusRelatedListeners() {
         addMouseListener(new MouseAdapter() {
-            @Override
-            public void mouseClicked(MouseEvent e) {
-                requestFocusInWindow();
-            }
+            @Override public void mouseClicked(MouseEvent e) { requestFocusInWindow(); }
         });
     }
 
@@ -165,9 +188,7 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
     enum CaretDirection {
         UP, DOWN, LEFT, RIGHT;
 
-        int getKeyCode() { return getCorrectOne(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT);}
-
-        String getActionName() { return getCorrectOne("CaretUp", "CaretDown", "CaretLeft", "CaretRight"); }
+        int getKeyCode() { return getCorrectOne(KeyEvent.VK_UP, KeyEvent.VK_DOWN, KeyEvent.VK_LEFT, KeyEvent.VK_RIGHT); }
 
         private <T> T getCorrectOne(T up, T down, T left, T right) {
             switch (this) {
@@ -182,19 +203,27 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
 
     private void addCaretMovementsActions() {
         Arrays.asList(CaretDirection.values()).forEach(
-                caretDir -> {
-                    getInputMap().put(
-                            KeyStroke.getKeyStroke(caretDir.getKeyCode() ,0),
-                            caretDir.getActionName());
+                caretDir -> bindKeyToAction(caretDir.getKeyCode(), new AbstractAction() {
+                    @Override public void actionPerformed(ActionEvent e) { caret.move(caretDir); }
+                }));
 
-                    getActionMap().put(caretDir.getActionName(), new AbstractAction() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
-                            caret.move(caretDir);
-                        }
-                    });
-                });
+        bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { removeText(caret.positionAfterCaret(),1); }
+        });
+
+        bindKeyToAction(KeyEvent.VK_BACK_SPACE, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) { removeText(caret.positionBeforeCaret(),1); }
+        });
     }
+
+    private void bindKeyToAction(int key, Action action) {
+        String keyName = KeyEvent.getKeyText(key);
+        getInputMap().put(KeyStroke.getKeyStroke(key, 0),  keyName);
+        getActionMap().put(keyName, action);
+    }
+
 
     class Caret {
         Caret() { relativePosition = new Point(0, 0); }
@@ -203,47 +232,51 @@ public class EditorTextBox extends JComponent implements Scrollable, Accessible
 
         public void setRelativePosition(Point relativePosition) { this.relativePosition = relativePosition; }
 
-        Point relativePosition;
+        private Point relativePosition;
 
         Rectangle caretRect() {
             int yCoord = getAbsolutePosition().y + (fontHeight() - fontMetrics().getAscent());
             return new Rectangle(getAbsolutePosition().x, yCoord, 2, fontHeight());
         }
 
+        Point positionBeforeCaret() { return horizontalMove(relativePosition, -1); }
+
         void renderCaret(Graphics g) {
             g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
         }
 
+        Point positionAfterCaret() { return relativePosition; }
+
         void move(CaretDirection direction) {
-            Point previousPosition = (Point)relativePosition.clone();
+            Point updatedPosition = (Point) relativePosition.clone();
             switch (direction) {
-                case UP: verticalMove(-1);
-                    break;
-                case DOWN: verticalMove(1);
-                    break;
-                case LEFT: horizontalMove(-1);
-                    break;
-                case RIGHT: horizontalMove(1);
-                    break;
+                case UP:
+                    updatedPosition = verticalMove(updatedPosition, -1); break;
+                case DOWN:
+                    updatedPosition = verticalMove(updatedPosition, 1); break;
+                case LEFT:
+                    updatedPosition = horizontalMove(updatedPosition, -1); break;
+                case RIGHT:
+                    updatedPosition = horizontalMove(updatedPosition, 1); break;
             }
-            if (previousPosition != relativePosition) {
+            if (updatedPosition != relativePosition) {
+                setRelativePosition(updatedPosition);
                 scrollRectToVisible(caretRect());
                 repaint();
             }
         }
 
-        private void verticalMove(int direction) {
-            int newY = Math.min(Math.max(relativePosition.y + direction, 0), lastLine());
-            if (newY == relativePosition.y) return;
-            int newX = Math.min(lines.get(newY).length(), relativePosition.x);
-            setRelativePosition(new Point(newX, newY));
+        private Point verticalMove(Point position, int direction) {
+            int newY = Math.min(Math.max(position.y + direction, 0), lastLine());
+            if (newY == position.y) return position;
+            int newX = Math.min(lines.get(newY).length(), position.x);
+            return new Point(newX, newY);
         }
 
-        private void horizontalMove(int direction) {
-            String currentLine = lines.get(relativePosition.y);
-            int newX = Math.min(Math.max(0, relativePosition.x+ direction), currentLine.length());
-            if (newX != relativePosition.x)
-                setRelativePosition(new Point(newX, relativePosition.y));
+        private Point horizontalMove(Point position, int direction) {
+            String currentLine = lines.get(position.y);
+            int newX = Math.min(Math.max(0, position.x + direction), currentLine.length());
+            return new Point(newX, position.y);
         }
     }
 
