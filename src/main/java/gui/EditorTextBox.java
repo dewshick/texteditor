@@ -186,6 +186,18 @@ public class EditorTextBox extends JComponent implements Scrollable {
                 caret.move(CaretDirection.RIGHT);
             }
         });
+
+        addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                super.mouseClicked(e);
+                Point clickCoords = e.getPoint();
+                Point absoluteCoords = new Point(clickCoords.x + (fontWidth()/2), clickCoords.y);
+                Point relativeCoords = new Point(absoluteCoords.x / fontWidth(), absoluteCoords.y / fontHeight());
+                caret.setRelativePosition(getTextStorage().closestRealCoord(relativeCoords));
+                repaint();
+            }
+        });
     }
 
     private void bindKeyToAction(int key, Action action) {

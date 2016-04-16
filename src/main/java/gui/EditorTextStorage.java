@@ -99,6 +99,12 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
+    public Point closestRealCoord(Point point) {
+        if (point.y < 0) return beginningOfText();
+        else if (point.y >= lines.size()) return endOfText();
+        else return new Point(Math.min(point.x, lines.get(point.y).length()), point.y);
+    }
+
 //    correct string-split
     private static List<String> buildLinesList(String str) {
         int initialIndex = 0;
