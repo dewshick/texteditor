@@ -1,14 +1,13 @@
 package editor;
 
 import static org.junit.Assert.assertEquals;
-import gui.EditorTextBox;
+
+import gui.EditorTextStorage;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -17,14 +16,14 @@ import java.util.List;
 
 //TODO refactor all the combinatorics if there will be time for it
 public class TextEditorTest {
-    EditorTextBox editor;
+    EditorTextStorage textStorage;
     String text;
 
     @Before
     public void init() {
         text = "firstline endoffirstline\nsecondline endofsecondline\nthirdline endofthirdline";
-        editor = new EditorTextBox(null);
-        editor.setText(text);
+        textStorage = new EditorTextStorage();
+        textStorage.setText(text);
     }
 
     @Test
@@ -160,13 +159,13 @@ public class TextEditorTest {
     private void pasteText(Point coords, String addedText) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + addedText + text.substring(splitIndex);
-        editor.addText(coords, addedText);
+        textStorage.addText(coords, addedText);
     }
 
     private void deleteText(Point coords, int length) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + text.substring(splitIndex + length);
-        editor.removeText(coords, length);
+        textStorage.removeText(coords, length);
     }
 
     private int splitIndex(Point point) {
@@ -179,7 +178,7 @@ public class TextEditorTest {
     }
 
     private void assertStateIsCorrect() {
-        assertEquals(text, editor.getText());
+        assertEquals(text, textStorage.getText());
     }
 
     private void insertText() {

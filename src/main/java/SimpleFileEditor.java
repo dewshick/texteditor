@@ -38,9 +38,9 @@ public class SimpleFileEditor extends JPanel {
                         if (scanner.hasNext())
                             text.append("\n");
                     }
-                    editableArea.setText(text.toString());
+                    editableArea.getTextStorage().setText(text.toString());
                 } catch (FileNotFoundException e) {
-                    editableArea.setText(e.getMessage());
+                    editableArea.getTextStorage().setText(e.getMessage());
                     editableArea.setEditable(false);
                 }
 
@@ -57,10 +57,10 @@ public class SimpleFileEditor extends JPanel {
                 File file = fileChooser.getSelectedFile();
                 try {
                     PrintWriter writer = new PrintWriter(file);
-                    writer.write(editableArea.getText());
+                    writer.write(editableArea.getTextStorage().getText());
                     writer.flush();
                 } catch (FileNotFoundException e) {
-                    editableArea.setText(e.getMessage());
+                    editableArea.getTextStorage().setText(e.getMessage());
                     editableArea.setEditable(false);
                 }
             }
@@ -84,7 +84,7 @@ public class SimpleFileEditor extends JPanel {
 
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
-        editableArea.setText(readDefaultFile());
+        editableArea.getTextStorage().setText(readDefaultFile());
 
 //        editableArea.addCaretListener(caretEvent -> {
 //            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
@@ -107,7 +107,8 @@ public class SimpleFileEditor extends JPanel {
     }
 
     private String readDefaultFile() {
-        String path = "/Users/avyatkin/Desktop/ajax.js";
+        String path = "/Users/avyatkin/Desktop/small_src.java";
+//        String path = "/Users/avyatkin/Desktop/ajax.js";
 //        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
 //        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/syntax/document/CodeDocumentFactory.java";
         try {
