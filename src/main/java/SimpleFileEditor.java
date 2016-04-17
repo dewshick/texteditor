@@ -5,6 +5,7 @@ import java.awt.*;
 import java.util.Scanner;
 import javax.swing.*;
 import javax.swing.SwingUtilities;
+import javax.swing.text.Highlighter;
 
 public class SimpleFileEditor extends JPanel {
 
@@ -85,7 +86,6 @@ public class SimpleFileEditor extends JPanel {
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
         editableArea.getTextStorage().setText(readDefaultFile());
-
 //        editableArea.addCaretListener(caretEvent -> {
 //            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
 //            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());

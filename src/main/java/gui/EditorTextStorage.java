@@ -3,9 +3,8 @@ package gui;
 import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -46,19 +45,19 @@ public class EditorTextStorage {
     }
 
     public void removeText(Point position, int length) {
-        ListIterator<String> iter = lines.listIterator(position.y);
-        StringBuilder affectedString = new StringBuilder();
-        if (iter.hasNext()) {
-            affectedString.append(iter.next());
+        Point end = position;
+        for (;length > 0;length--) end = horizontalMove(end, 1);
+        removeText(position, end);
+    }
+
+    public void removeText(Point start, Point end) {
+        String updated = lines.get(start.y).substring(0, start.x) + lines.get(end.y).substring(end.x);
+        ListIterator<String> iter = lines.listIterator(start.y);
+        for (int i = start.y; i <= end.y; i++) {
+            iter.next();
             iter.remove();
-            while (iter.hasNext() && position.x + length > affectedString.length()) {
-                affectedString.append("\n").append(iter.next());
-                iter.remove();
-            }
         }
-        String old = affectedString.toString();
-        String updated = old.substring(0, position.x) + old.substring(position.x + length);
-        buildLinesList(updated).forEach(iter::add);
+        iter.add(updated);
     }
 
     /**
@@ -82,6 +81,7 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
+//    moves only on 1 position
     public Point horizontalMove(Point position, int direction) {
         String currentLine = lines.get(position.y);
         int newY = position.y;
@@ -99,11 +99,20 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
-    public Point closestRealCoord(Point point) {
+    public Point closestCaretPosition(Point point) {
         if (point.y < 0) return beginningOfText();
         else if (point.y >= lines.size()) return endOfText();
         else return new Point(Math.min(point.x, lines.get(point.y).length()), point.y);
     }
+
+//    public String textInSelection(EditorTextBox.Selection selection) {
+//        if (selection.isEmpty()) return "";
+//        Point start = selection.startEdge();
+//        Point end = selection.endEdge();
+//        StringBuilder result = new StringBuilder();
+//        Iterator<String> iter = lines.listIterator(start.y);
+//        result.append(iter.next().substring(end.))
+//    }
 
 //    correct string-split
     private static List<String> buildLinesList(String str) {
