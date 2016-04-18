@@ -50,7 +50,7 @@ public class EditorTextStorage {
         removeText(position, end);
     }
 
-    public void removeText(Point start, Point end) {
+    private void removeText(Point start, Point end) {
         String updated = lines.get(start.y).substring(0, start.x) + lines.get(end.y).substring(end.x);
         ListIterator<String> iter = lines.listIterator(start.y);
         for (int i = start.y; i <= end.y; i++) {
@@ -58,6 +58,31 @@ public class EditorTextStorage {
             iter.remove();
         }
         iter.add(updated);
+    }
+
+    public void removeText(EditorTextBox.Selection selection) {
+        Point start = selection.startEdge();
+        Point end = selection.endEdge();
+        removeText(start, end);
+    }
+
+//    iterator code is almost the same for all the strings so maybe there's way to reuse it?
+//    to avoid complex testing/rewriting all the time
+    public String getText(EditorTextBox.Selection selection) {
+        Point start = selection.startEdge();
+        Point end = selection.endEdge();
+        StringBuilder result = new StringBuilder();
+        if (start.y == end.y)
+            result.append(lines.get(start.y).substring(start.x, end.x));
+        else {
+            result.append(lines.get(start.y).substring(start.x));
+            for (int i = start.y + 1; i < end.y; i++) {
+                result.append('\n');
+                result.append(lines.get(i));
+            }
+            result.append(lines.get(end.y).substring(0, end.x));
+        }
+        return result.toString();
     }
 
     /**

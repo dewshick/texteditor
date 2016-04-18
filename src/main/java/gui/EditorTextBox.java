@@ -1,14 +1,21 @@
 package gui;
 
+import jdk.nashorn.internal.runtime.options.Option;
 import org.w3c.dom.css.Rect;
 
 import javax.swing.*;
 import javax.swing.text.Document;
+import java.awt.datatransfer.Clipboard;
+import java.awt.datatransfer.DataFlavor;
+import java.awt.datatransfer.StringSelection;
+import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Arrays;
+import java.util.Optional;
 
 /**
  * Created by avyatkin on 06/04/16.
@@ -216,6 +223,30 @@ public class EditorTextBox extends JComponent implements Scrollable {
                     });
                 });
 
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('c'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                if (!selection.isEmpty()) {
+                    ClipboardInterop.copy(textStorage.getText(selection));
+                    repaint();
+                }
+            }
+        });
+
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('v'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                Optional<String> pastedText = ClipboardInterop.paste();
+                if (pastedText.isPresent()) {
+                    selection.removeTextUnderSelection();
+                    textStorage.addText(caret.relativePosition, pastedText.get());
+                    repaint();
+                }
+            }
+        });
+
+
+
         bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
@@ -244,6 +275,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (e.isActionKey() || ignoredKeys.indexOf(e.getExtendedKeyCode()) != -1) return;
+                if (getFont().canDisplay(e.getKeyChar())) return;
                 if (!selection.isEmpty()) selection.removeTextUnderSelection();
                 textStorage.addText(caret.relativePosition, e.getKeyChar() + "");
                 caret.move(CaretDirection.RIGHT);
@@ -344,12 +376,40 @@ public class EditorTextBox extends JComponent implements Scrollable {
         }
 
         private void removeTextUnderSelection() {
-            textStorage.removeText(startEdge(), endEdge());
+            textStorage.removeText(this);
             dropSelection(startEdge());
             caret.relativePosition = startEdge();
         }
 
         private Point initialCaret;
         private Point edgeCaret;
+    }
+
+    static class ClipboardInterop {
+        static Optional<String> paste() {
+//            are plain retries suitable for this?
+            int retries = 100;
+            for (int i = 0; i < retries; i++) {
+                try {
+                    return Optional.of((String) defaultClipboard().getData(DataFlavor.stringFlavor));
+                } catch (UnsupportedFlavorException e) {
+                    return Optional.empty();
+                } catch (IOException | IllegalStateException e) {}
+            }
+            return Optional.empty();
+        }
+
+        static void copy(String str) {
+            int retries = 100;
+            for (int i = 0; i < retries; i++) {
+                try {
+                    defaultClipboard().setContents(new StringSelection(str), null);
+                } catch (IllegalStateException e) {}
+            }
+        }
+
+        static Clipboard defaultClipboard() {
+            return Toolkit.getDefaultToolkit().getSystemClipboard();
+        }
     }
 }
