@@ -222,7 +222,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
             @Override
             public void actionPerformed(ActionEvent e) {
                 if (!selection.isEmpty()) {
-                    ClipboardInterop.copy(textStorage.getText(selection));
+                    ClipboardInterop.copy(textStorage.getText(selection.startPoint(), selection.endPoint()));
                     repaint();
                 }
             }
@@ -245,24 +245,25 @@ public class EditorTextBox extends JComponent implements Scrollable {
         bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!caret.relativePosition.equals(textStorage.endOfText())) {
-                    if (selection.isEmpty()) textStorage.removeText(caret.positionAfterCaret(), 1);
-                    else selection.removeTextUnderSelection();
-                    repaint();
-                }
+                if (caret.relativePosition.equals(textStorage.endOfText()) && selection.isEmpty())
+                    return;
+
+                if (selection.isEmpty()) textStorage.removeText(caret.positionAfterCaret(), 1);
+                else selection.removeTextUnderSelection();
+                repaint();
             }
         });
 
         bindKeyToAction(KeyEvent.VK_BACK_SPACE, new AbstractAction() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                if (!caret.relativePosition.equals(textStorage.beginningOfText())) {
-                    if (selection.isEmpty()) {
-                        caret.move(CaretDirection.LEFT);
-                        textStorage.removeText(caret.positionAfterCaret(), 1);
-                    } else selection.removeTextUnderSelection();
-                    repaint();
-                }
+                if (caret.relativePosition.equals(textStorage.beginningOfText()) && selection.isEmpty())
+                    return;
+                if (selection.isEmpty()) {
+                    caret.move(CaretDirection.LEFT);
+                    textStorage.removeText(caret.positionAfterCaret(), 1);
+                } else selection.removeTextUnderSelection();
+                repaint();
             }
         });
 
@@ -270,7 +271,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (e.isActionKey() || ignoredKeys.indexOf(e.getExtendedKeyCode()) != -1) return;
-                if (getFont().canDisplay(e.getKeyChar())) return;
+                if (!getFont().canDisplay(e.getKeyChar())) return;
                 if (!selection.isEmpty()) selection.removeTextUnderSelection();
                 textStorage.addText(caret.relativePosition, e.getKeyChar() + "");
                 caret.move(CaretDirection.RIGHT);
@@ -316,9 +317,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
         caret.setRelativePosition(getTextStorage().closestCaretPosition(relativeCoords));
     }
 
-    private void bindKeyToAction(int key, Action action) {
-        bindKeyToAction(key, 0, action);
-    }
+    private void bindKeyToAction(int key, Action action) { bindKeyToAction(key, 0, action); }
 
     private void bindKeyToAction(int key, int modifier, Action action) {
         String keyName = KeyEvent.getKeyText(key) + KeyEvent.getModifiersExText(modifier);
@@ -328,7 +327,10 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
 
     class Caret {
-        Caret() { relativePosition = new Point(0, 0); }
+        Caret() {
+            relativePosition = new Point(0, 0);
+            insertMode = false;
+        }
 
         private Point getAbsolutePosition() { return absoluteCoords(relativePosition); }
 
@@ -336,13 +338,27 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
         private Point relativePosition;
 
+        private boolean insertMode;
+
         Rectangle caretRect() {
-            int yCoord = getAbsolutePosition().y;
-            return new Rectangle(getAbsolutePosition().x, yCoord, 2, fontHeight());
+            int width = insertMode ? fontWidth() : 2;
+            return new Rectangle(getAbsolutePosition().x, getAbsolutePosition().y, width, fontHeight());
         }
 
         void renderCaret(Graphics g) {
+//            TODO: SPECIFIC COLOR FOR CARET!
+//            TODO: SPECIFIC STATE MACHINE FOR COLORS/DEFAULT COLOR/WHATEVER TO MAINTAIN CORRECT STATE
+            Color c = g.getColor();
+            g.setColor(Color.black);
             g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
+            if (insertMode) {
+                String relevantLine = textStorage.getLines().get(caretRect().y);
+                if (relevantLine.length() <= caretRect().x) return;
+                g.setColor(Color.white);
+//                g.
+            }
+            g.setColor(c);
+
         }
 
         Point positionAfterCaret() { return relativePosition; }
