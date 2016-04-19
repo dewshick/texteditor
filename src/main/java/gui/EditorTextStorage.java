@@ -4,7 +4,6 @@ import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -61,16 +60,16 @@ public class EditorTextStorage {
     }
 
     public void removeText(EditorTextBox.Selection selection) {
-        Point start = selection.startEdge();
-        Point end = selection.endEdge();
+        Point start = selection.startPoint();
+        Point end = selection.endPoint();
         removeText(start, end);
     }
 
 //    iterator code is almost the same for all the strings so maybe there's way to reuse it?
 //    to avoid complex testing/rewriting all the time
     public String getText(EditorTextBox.Selection selection) {
-        Point start = selection.startEdge();
-        Point end = selection.endEdge();
+        Point start = selection.startPoint();
+        Point end = selection.endPoint();
         StringBuilder result = new StringBuilder();
         if (start.y == end.y)
             result.append(lines.get(start.y).substring(start.x, end.x));
@@ -132,8 +131,8 @@ public class EditorTextStorage {
 
 //    public String textInSelection(EditorTextBox.Selection selection) {
 //        if (selection.isEmpty()) return "";
-//        Point start = selection.startEdge();
-//        Point end = selection.endEdge();
+//        Point start = selection.startPoint();
+//        Point end = selection.endPoint();
 //        StringBuilder result = new StringBuilder();
 //        Iterator<String> iter = lines.listIterator(start.y);
 //        result.append(iter.next().substring(end.))

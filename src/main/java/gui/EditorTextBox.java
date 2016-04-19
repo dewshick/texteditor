@@ -1,8 +1,5 @@
 package gui;
 
-import jdk.nashorn.internal.runtime.options.Option;
-import org.w3c.dom.css.Rect;
-
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.datatransfer.Clipboard;
@@ -107,13 +104,13 @@ public class EditorTextBox extends JComponent implements Scrollable {
         List<Rectangle> result = new ArrayList<>();
         Dimension size = getPreferredSize();
         if (selection.isEmpty()) return result;
-        if (selection.startEdge().y == selection.endEdge().y) {
-            result.add(absoluteRectangle(new Rectangle(selection.startEdge().x, selection.startEdge().y, selection.endEdge().x - selection.startEdge().x, 1)));
+        if (selection.startPoint().y == selection.endPoint().y) {
+            result.add(absoluteRectangle(new Rectangle(selection.startPoint().x, selection.startPoint().y, selection.endPoint().x - selection.startPoint().x, 1)));
         } else {
-            result.add(absoluteRectangle(new Rectangle(selection.startEdge().x, selection.startEdge().y, size.width, 1)));
-            for (int i = selection.startEdge().y + 1; i < selection.endEdge().y; i++)
+            result.add(absoluteRectangle(new Rectangle(selection.startPoint().x, selection.startPoint().y, size.width, 1)));
+            for (int i = selection.startPoint().y + 1; i < selection.endPoint().y; i++)
                 result.add(absoluteRectangle(new Rectangle(0, i, size.width, 1)));
-            result.add(absoluteRectangle(new Rectangle(0, selection.endEdge().y, selection.endEdge().x, 1)));
+            result.add(absoluteRectangle(new Rectangle(0, selection.endPoint().y, selection.endPoint().x, 1)));
         }
         return result;
     }
@@ -164,9 +161,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
     private void addFocusRelatedListeners() {
         addMouseListener(new MouseAdapter() {
             @Override
-            public void mouseClicked(MouseEvent e) {
-                requestFocusInWindow();
-            }
+            public void mousePressed(MouseEvent e) { requestFocusInWindow(); }
         });
     }
 
@@ -201,9 +196,9 @@ public class EditorTextBox extends JComponent implements Scrollable {
                         public void actionPerformed(ActionEvent e) {
                             if (!selection.isEmpty()) {
                                 if (caretDir.getKeyCode() == KeyEvent.VK_LEFT)
-                                    caret.relativePosition = selection.startEdge();
+                                    caret.relativePosition = selection.startPoint();
                                 else if (caretDir.getKeyCode() == KeyEvent.VK_RIGHT)
-                                    caret.relativePosition = selection.endEdge();
+                                    caret.relativePosition = selection.endPoint();
                                 else caret.move(caretDir);
 
                             } else caret.move(caretDir);
@@ -283,20 +278,42 @@ public class EditorTextBox extends JComponent implements Scrollable {
             }
         });
 
+        addMouseMotionListener(new MouseMotionAdapter() {
+            @Override
+            public void mouseDragged(MouseEvent e) {
+                if (SwingUtilities.isLeftMouseButton(e)) {
+                    setCaretToMousePosition(e);
+                    selection.extendSelection();
+                    repaint();
+                }
+            }
+        });
+
         addMouseListener(new MouseAdapter() {
             //TODO: selection if mouse moved in pressed state
             @Override
             public void mouseClicked(MouseEvent e) {
-                super.mouseClicked(e);
-                Point clickCoords = e.getPoint();
-                Point absoluteCoords = new Point(clickCoords.x + (fontWidth()/2), clickCoords.y);
-                Point relativeCoords = new Point(absoluteCoords.x / fontWidth(), absoluteCoords.y / fontHeight());
-                caret.setRelativePosition(getTextStorage().closestCaretPosition(relativeCoords));
+                setCaretToMousePosition(e);
                 if (e.isShiftDown()) selection.extendSelection();
                 else selection.dropSelection();
                 repaint();
             }
+
+            @Override
+            public void mousePressed(MouseEvent e) {
+                if (e.isShiftDown()) return;
+                setCaretToMousePosition(e);
+                selection.dropSelection();
+                repaint();
+            }
         });
+    }
+
+    private void setCaretToMousePosition(MouseEvent e) {
+        Point clickCoords = e.getPoint();
+        Point absoluteCoords = new Point(clickCoords.x + (fontWidth()/2), clickCoords.y);
+        Point relativeCoords = new Point(absoluteCoords.x / fontWidth(), absoluteCoords.y / fontHeight());
+        caret.setRelativePosition(getTextStorage().closestCaretPosition(relativeCoords));
     }
 
     private void bindKeyToAction(int key, Action action) {
@@ -357,32 +374,37 @@ public class EditorTextBox extends JComponent implements Scrollable {
         public Selection() { dropSelection(); }
 
         public void dropSelection(Point point) {
-            this.initialCaret = point;
-            this.edgeCaret = point;
+            this.initialPoint = point;
+            this.edgePoint = point;
         }
 
         public void dropSelection() { dropSelection(caret.relativePosition); }
 
-        public void extendSelection() { edgeCaret = caret.relativePosition; }
+        public void extendSelection() { edgePoint = caret.relativePosition; }
 
-        public boolean isEmpty() { return initialCaret.equals(edgeCaret); }
+        public void switchCaretsWithCurrent() {
+            edgePoint = initialPoint;
+            initialPoint = caret.relativePosition;
+        }
 
-        public Point startEdge() { return isInitialAfterEdge() ? edgeCaret : initialCaret; }
+        public boolean isEmpty() { return initialPoint.equals(edgePoint); }
 
-        public Point endEdge() { return isInitialAfterEdge() ? initialCaret : edgeCaret; }
+        public Point startPoint() { return isInitialAfterEdge() ? edgePoint : initialPoint; }
+
+        public Point endPoint() { return isInitialAfterEdge() ? initialPoint : edgePoint; }
 
         private boolean isInitialAfterEdge() {
-            return initialCaret.y > edgeCaret.y || (initialCaret.y == edgeCaret.y && initialCaret.x > edgeCaret.x);
+            return initialPoint.y > edgePoint.y || (initialPoint.y == edgePoint.y && initialPoint.x > edgePoint.x);
         }
 
         private void removeTextUnderSelection() {
             textStorage.removeText(this);
-            dropSelection(startEdge());
-            caret.relativePosition = startEdge();
+            dropSelection(startPoint());
+            caret.relativePosition = startPoint();
         }
 
-        private Point initialCaret;
-        private Point edgeCaret;
+        private Point initialPoint;
+        private Point edgePoint;
     }
 
     static class ClipboardInterop {
