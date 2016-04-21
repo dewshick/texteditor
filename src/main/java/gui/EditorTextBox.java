@@ -141,8 +141,6 @@ public class EditorTextBox extends JComponent implements Scrollable {
         selectionInBounds(clip).forEach(rect -> g.fillRect(rect.x, rect.y, rect.width, rect.height));
         g.setColor(Color.black);
 
-        caret.renderCaret(g);
-
         int xOffset = clip.x;
         int yOffset = fontHeight();
 
@@ -152,6 +150,7 @@ public class EditorTextBox extends JComponent implements Scrollable {
             yOffset += fontHeight();
             if (yOffset > clip.height + clip.y) break;
         }
+        caret.renderCaret(g);
     }
 
     /**
@@ -267,12 +266,25 @@ public class EditorTextBox extends JComponent implements Scrollable {
             }
         });
 
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('i'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                caret.switchInsertMode();
+                repaint();
+            }
+        });
+
         addKeyListener(new KeyAdapter() {
             @Override
             public void keyTyped(KeyEvent e) {
                 if (e.isActionKey() || ignoredKeys.indexOf(e.getExtendedKeyCode()) != -1) return;
                 if (!getFont().canDisplay(e.getKeyChar())) return;
+                if (e.isControlDown()) return;
                 if (!selection.isEmpty()) selection.removeTextUnderSelection();
+                else if (caret.insertMode &&
+                        e.getKeyChar() != '\n' &&
+                        textStorage.getLines().get(caret.relativePosition.y).length() > caret.relativePosition.x)
+                    textStorage.removeText(caret.positionAfterCaret(), 1);
                 textStorage.addText(caret.relativePosition, e.getKeyChar() + "");
                 caret.move(CaretDirection.RIGHT);
                 repaint();
@@ -340,6 +352,10 @@ public class EditorTextBox extends JComponent implements Scrollable {
 
         private boolean insertMode;
 
+        public void switchInsertMode() {
+            insertMode = !insertMode;
+        }
+
         Rectangle caretRect() {
             int width = insertMode ? fontWidth() : 2;
             return new Rectangle(getAbsolutePosition().x, getAbsolutePosition().y, width, fontHeight());
@@ -348,17 +364,21 @@ public class EditorTextBox extends JComponent implements Scrollable {
         void renderCaret(Graphics g) {
 //            TODO: SPECIFIC COLOR FOR CARET!
 //            TODO: SPECIFIC STATE MACHINE FOR COLORS/DEFAULT COLOR/WHATEVER TO MAINTAIN CORRECT STATE
+//            TODO: SEPARATE RENDERING AND HANDLING RELATIVE/ABSOLUTE COORDS FROM VIEW LOGIC
+//            TODO: RENDER ONLY DIFF
             Color c = g.getColor();
             g.setColor(Color.black);
             g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
             if (insertMode) {
-                String relevantLine = textStorage.getLines().get(caretRect().y);
-                if (relevantLine.length() <= caretRect().x) return;
-                g.setColor(Color.white);
-//                g.
+                String relevantLine = textStorage.getLines().get(relativePosition.y);
+                if (relevantLine.length() <= relativePosition.x) return;
+                g.setColor(Color.green);
+                Point textEnd = new Point(relativePosition.x + 1, relativePosition.y);
+                String text = textStorage.getText(relativePosition, textEnd);
+                g.setFont(FONT);
+                g.drawString(text, relativePosition.x * fontWidth(), (relativePosition.y+1) * fontHeight());
             }
             g.setColor(c);
-
         }
 
         Point positionAfterCaret() { return relativePosition; }
