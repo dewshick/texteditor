@@ -2,7 +2,7 @@ package editor;
 
 import static org.junit.Assert.assertEquals;
 
-import gui.EditorTextStorage;
+import gui.state.EditorTextStorage;
 import org.junit.Before;
 import org.junit.Test;
 

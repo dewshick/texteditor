@@ -1,19 +1,18 @@
-import gui.EditorTextBox;
+import gui.EditorComponent;
 import syntax.document.CodeDocumentFactory;
 import java.io.*;
 import java.awt.*;
 import java.util.Scanner;
 import javax.swing.*;
 import javax.swing.SwingUtilities;
-import javax.swing.text.Highlighter;
 
 public class SimpleFileEditor extends JPanel {
 
-    EditorTextBox editableArea;
+    EditorComponent editableArea;
 
-    private static final EditorTextBox initEditableArea() {
+    private static final EditorComponent initEditableArea() {
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
-        EditorTextBox editableArea = new EditorTextBox(CodeDocumentFactory.forJs());
+        EditorComponent editableArea = new EditorComponent(CodeDocumentFactory.forJs());
 //        editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
@@ -24,7 +23,7 @@ public class SimpleFileEditor extends JPanel {
     JButton openButton;
     JButton saveButton;
 
-    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorTextBox editableArea) {
+    private static final JButton openingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorComponent editableArea) {
         JButton openButton = new JButton("Open a File...");
         openButton.addActionListener((event) -> {
             int returnVal = fileChooser.showOpenDialog(fileEditor);
@@ -39,9 +38,9 @@ public class SimpleFileEditor extends JPanel {
                         if (scanner.hasNext())
                             text.append("\n");
                     }
-                    editableArea.getTextStorage().setText(text.toString());
+                    editableArea.setText(text.toString());
                 } catch (FileNotFoundException e) {
-                    editableArea.getTextStorage().setText(e.getMessage());
+                    editableArea.setText(e.getMessage());
                     editableArea.setEditable(false);
                 }
 
@@ -50,7 +49,7 @@ public class SimpleFileEditor extends JPanel {
         return openButton;
     }
 
-    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorTextBox editableArea) {
+    private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorComponent editableArea) {
         JButton saveButton = new JButton("Save changes");
         saveButton.addActionListener((event) -> {
             int returnVal = fileChooser.showSaveDialog(fileEditor);
@@ -58,10 +57,10 @@ public class SimpleFileEditor extends JPanel {
                 File file = fileChooser.getSelectedFile();
                 try {
                     PrintWriter writer = new PrintWriter(file);
-                    writer.write(editableArea.getTextStorage().getText());
+                    writer.write(editableArea.getText());
                     writer.flush();
                 } catch (FileNotFoundException e) {
-                    editableArea.getTextStorage().setText(e.getMessage());
+                    editableArea.setText(e.getMessage());
                     editableArea.setEditable(false);
                 }
             }
@@ -85,7 +84,7 @@ public class SimpleFileEditor extends JPanel {
 
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
-        editableArea.getTextStorage().setText(readDefaultFile());
+        editableArea.setText(readDefaultFile());
 //        editableArea.addCaretListener(caretEvent -> {
 //            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
 //            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());
@@ -107,7 +106,7 @@ public class SimpleFileEditor extends JPanel {
     }
 
     private String readDefaultFile() {
-        String path = "/Users/avyatkin/Desktop/small_src.java";
+        String path = "/Users/avyatkin/Desktop/big_src.java";
 //        String path = "/Users/avyatkin/Desktop/ajax.js";
 //        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
 //        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/syntax/document/CodeDocumentFactory.java";

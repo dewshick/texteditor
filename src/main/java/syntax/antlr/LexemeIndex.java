@@ -18,9 +18,7 @@ import java.util.function.Function;
  * Created by avyatkin on 01/04/16.
  */
 public class LexemeIndex {
-    public String getTokenType(Token t) {
-        return lexer.getVocabulary().getDisplayName(t.getType());
-    }
+    public String getTokenType(Token t) { return lexer.getVocabulary().getDisplayName(t.getType()); }
 
     Lexer lexer;
     SupportedSyntax syntax;
@@ -34,9 +32,7 @@ public class LexemeIndex {
 
     private List<Lexeme> lexemes;
 
-    public List<Lexeme> lexemes() {
-        return lexemes;
-    }
+    public List<Lexeme> lexemes() { return lexemes; }
 
     private Lexeme lexemeFromToken(Token current) {
         int offset = current.getStartIndex();
@@ -192,14 +188,10 @@ public class LexemeIndex {
         private Lexer updatedCodeLexer(String init, Iterator<Lexeme> todo) {
             Enumeration readersEnum = new Enumeration<InputStream>() {
                 @Override
-                public boolean hasMoreElements() {
-                    return todo.hasNext();
-                }
+                public boolean hasMoreElements() { return todo.hasNext(); }
 
                 @Override
-                public InputStream nextElement() {
-                    return stringInputStream(todo.next().getText());
-                }
+                public InputStream nextElement() { return stringInputStream(todo.next().getText()); }
             };
 
             SequenceInputStream inputStream = new SequenceInputStream(readersEnum);

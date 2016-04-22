@@ -1,5 +1,6 @@
-package gui;
+package gui.state;
 
+import gui.EditorComponent;
 import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
@@ -25,7 +26,8 @@ public class EditorTextStorage {
     public void setText(String text) { this.lines = buildLinesList(text); }
 
 //    TODO: use 2d int rectangle to return displayed area
-    List<String> getLines() { return lines; }
+//    TODO: should be package-local
+    public List<String> getLines() { return lines; }
 
     /**
      * Edit text
@@ -59,7 +61,7 @@ public class EditorTextStorage {
         iter.add(updated);
     }
 
-    public void removeText(EditorTextBox.Selection selection) {
+    public void removeText(EditorState.Selection selection) {
         Point start = selection.startPoint();
         Point end = selection.endPoint();
         removeText(start, end);
