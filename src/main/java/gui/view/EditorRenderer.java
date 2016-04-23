@@ -11,7 +11,7 @@ import java.util.List;
  */
 public class EditorRenderer {
     EditorState state;
-    ViewUtils utils;
+    TextCoordUtils utils;
 
     public CaretRenderer getCaretRenderer() {
         return caretRenderer;
@@ -19,7 +19,7 @@ public class EditorRenderer {
 
     CaretRenderer caretRenderer;
 
-    public EditorRenderer(EditorState state1, ViewUtils params1) {
+    public EditorRenderer(EditorState state1, TextCoordUtils params1) {
         state = state1;
         utils = params1;
         caretRenderer = new CaretRenderer();
@@ -48,7 +48,7 @@ public class EditorRenderer {
     //    TODO: render all this in separate specified class
     //    TODO: intersect updated area with relative rectangle and render diff
     public void paintState(Graphics g) {
-        g.setFont(ViewUtils.FONT);
+        g.setFont(TextCoordUtils.FONT);
 
         Rectangle clip = g.getClipBounds();
         g.setColor(EditorColors.BACKGROUND);
@@ -109,7 +109,7 @@ public class EditorRenderer {
                 g.setColor(EditorColors.TEXT_OVER_INSERT_CARET);
                 Point textEnd = new Point(relativePosition.x + 1, relativePosition.y);
                 String text = textStorage.getText(relativePosition, textEnd);
-                g.setFont(ViewUtils.FONT);
+                g.setFont(TextCoordUtils.FONT);
                 Point textCoords = utils.absoluteTextCoords(relativePosition);
                 g.drawString(text, textCoords.x, textCoords.y);
             }

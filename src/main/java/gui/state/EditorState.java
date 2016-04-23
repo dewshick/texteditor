@@ -1,7 +1,9 @@
 package gui.state;
 
+import java.util.List;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -44,16 +46,13 @@ public class EditorState {
         caret.move(CaretDirection.RIGHT);
     }
 
-    public boolean moveCaret(Point coords, boolean extendSelection) {
-        Point oldCoords = (Point) caret.relativePosition.clone();
+    public void moveCaret(Point coords, boolean extendSelection) {
         caret.setRelativePosition(textStorage.closestCaretPosition(coords));
         if (extendSelection) selection.extendSelection();
         else selection.dropSelection();
-        return !oldCoords.equals(caret.relativePosition);
     }
 
-    public boolean moveCaret(CaretDirection direction, boolean extendSelection) {
-        Point oldCoords = (Point) caret.relativePosition.clone();
+    public void moveCaret(CaretDirection direction, boolean extendSelection) {
         if (extendSelection) {
             caret.move(direction);
             selection.extendSelection();
@@ -64,12 +63,12 @@ public class EditorState {
                 else if (direction.getKeyCode() == KeyEvent.VK_RIGHT)
                     caret.relativePosition = selection.endPoint();
                 else caret.move(direction);
+                selection.dropSelection();
 
-            } else caret.move(direction);
-
-            selection.dropSelection();
+            } else {
+                caret.move(direction);
+            }
         }
-        return !oldCoords.equals(caret.relativePosition);
     }
 
     public void switchCaretMode() {

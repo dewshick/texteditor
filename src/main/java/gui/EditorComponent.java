@@ -3,7 +3,7 @@ package gui;
 import gui.state.CaretDirection;
 import gui.state.EditorState;
 import gui.view.EditorRenderer;
-import gui.view.ViewUtils;
+import gui.view.TextCoordUtils;
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.util.List;
@@ -22,13 +22,13 @@ public class EditorComponent extends JComponent implements Scrollable {
     public String getText() { return state.getTextStorage().getText(); }
 
     EditorState state;
-    ViewUtils viewParams;
+    TextCoordUtils coordUtils;
     EditorRenderer renderer;
 
     public EditorComponent(Document doc) {
         state = new EditorState();
-        viewParams = new ViewUtils(this);
-        renderer = new EditorRenderer(state, viewParams);
+        coordUtils = new TextCoordUtils(this);
+        renderer = new EditorRenderer(state, coordUtils);
 
         editable = true;
 
@@ -49,7 +49,7 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
-        return getValueForOrientation(orientation, viewParams.fontWidth(), viewParams.fontHeight());
+        return getValueForOrientation(orientation, coordUtils.fontWidth(), coordUtils.fontHeight());
     }
 
     @Override
@@ -107,10 +107,18 @@ public class EditorComponent extends JComponent implements Scrollable {
         renderer.paintState(g);
     }
 
-    public void handleCaretMovement(boolean caretMoved) {
-        if (caretMoved) {
-            scrollRectToVisible(renderer.getCaretRenderer().caretRect());
+    public void updateView(boolean caretMoved) {
+        if (caretMoved) scrollRectToVisible(renderer.getCaretRenderer().caretRect());
+        repaint();
+    }
+
+//     TODO: accept rectangle in relative coords with diff(recieved from state after state change) to be able to repaint only diff
+//     state will return
+    public void updateView(List<Rectangle> rectangles, boolean caretMoved) {
+        if (caretMoved && !getVisibleRect().contains(renderer.getCaretRenderer().caretRect()))
             repaint();
+        else {
+            for (Rectangle rect : rectangles) repaint(coordUtils.absoluteRectangle(rect));
         }
     }
 
@@ -120,14 +128,16 @@ public class EditorComponent extends JComponent implements Scrollable {
                     bindKeyToAction(caretDir.getKeyCode(), new AbstractAction() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            handleCaretMovement(state.moveCaret(caretDir, false));
+                            state.moveCaret(caretDir, false);
+                            updateView(true);
                         }
                     });
 
                     bindKeyToAction(caretDir.getKeyCode(), KeyEvent.SHIFT_DOWN_MASK, new AbstractAction() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            handleCaretMovement(state.moveCaret(caretDir, true));
+                            state.moveCaret(caretDir, true);
+                            updateView(true);
                         }
                     });
                 });
@@ -137,7 +147,7 @@ public class EditorComponent extends JComponent implements Scrollable {
             public void actionPerformed(ActionEvent e) {
                 Optional<String> selectedText = state.getSelectedText();
                 if (selectedText.isPresent()) ClipboardInterop.copy(selectedText.get());
-                repaint();
+                updateView(false);
             }
         });
 
@@ -147,7 +157,7 @@ public class EditorComponent extends JComponent implements Scrollable {
                 Optional<String> pastedText = ClipboardInterop.paste();
                 if (pastedText.isPresent()) {
                     state.paste(pastedText.get());
-                    repaint();
+                    updateView(true);
                 }
             }
         });
@@ -156,7 +166,7 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void actionPerformed(ActionEvent e) {
                 state.delete();
-                repaint();
+                updateView(true);
             }
         });
 
@@ -164,7 +174,7 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void actionPerformed(ActionEvent e) {
                 state.backspace();
-                repaint();
+                updateView(true);
             }
         });
 
@@ -172,7 +182,7 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void actionPerformed(ActionEvent e) {
                 state.switchCaretMode();
-                repaint();
+                updateView(false);
             }
         });
 
@@ -183,7 +193,7 @@ public class EditorComponent extends JComponent implements Scrollable {
                 if (!getFont().canDisplay(e.getKeyChar())) return;
                 if (e.isControlDown()) return;
                 state.type(e.getKeyChar());
-                repaint();
+                updateView(true);
             }
         });
 
@@ -191,7 +201,8 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), true));
+                    state.moveCaret(coordUtils.relativeMousePosition(e), true);
+                    updateView(true);
                 }
             }
         });
@@ -200,13 +211,15 @@ public class EditorComponent extends JComponent implements Scrollable {
             //TODO: selection if mouse moved in pressed state
             @Override
             public void mouseClicked(MouseEvent e) {
-                handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), e.isShiftDown()));
+                state.moveCaret(coordUtils.relativeMousePosition(e), e.isShiftDown());
+                updateView(true);
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isShiftDown()) return;
-                handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), false));
+                state.moveCaret(coordUtils.relativeMousePosition(e), false);
+                updateView(true);
             }
         });
     }
