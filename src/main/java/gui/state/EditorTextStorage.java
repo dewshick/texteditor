@@ -1,10 +1,10 @@
-package gui;
+package gui.state;
 
+import gui.EditorComponent;
 import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
 import java.util.ArrayList;
-import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 
@@ -26,7 +26,8 @@ public class EditorTextStorage {
     public void setText(String text) { this.lines = buildLinesList(text); }
 
 //    TODO: use 2d int rectangle to return displayed area
-    List<String> getLines() { return lines; }
+//    TODO: should be package-local
+    public List<String> getLines() { return lines; }
 
     /**
      * Edit text
@@ -45,9 +46,7 @@ public class EditorTextStorage {
     }
 
     public void removeText(Point position, int length) {
-        Point end = position;
-        for (;length > 0;length--) end = horizontalMove(end, 1);
-        removeText(position, end);
+        removeText(position, horizontalMove(position, length));
     }
 
     private void removeText(Point start, Point end) {
@@ -60,17 +59,15 @@ public class EditorTextStorage {
         iter.add(updated);
     }
 
-    public void removeText(EditorTextBox.Selection selection) {
-        Point start = selection.startEdge();
-        Point end = selection.endEdge();
+    public void removeText(EditorState.Selection selection) {
+        Point start = selection.startPoint();
+        Point end = selection.endPoint();
         removeText(start, end);
     }
 
 //    iterator code is almost the same for all the strings so maybe there's way to reuse it?
 //    to avoid complex testing/rewriting all the time
-    public String getText(EditorTextBox.Selection selection) {
-        Point start = selection.startEdge();
-        Point end = selection.endEdge();
+    public String getText(Point start, Point end) {
         StringBuilder result = new StringBuilder();
         if (start.y == end.y)
             result.append(lines.get(start.y).substring(start.x, end.x));
@@ -106,11 +103,20 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
+//    TODO: this can be easily optimized
+    public Point horizontalMove(Point position, int distance) {
+        int direction = distance > 0 ? 1 : -1;
+        int length = Math.abs(distance);
+        for (;length > 0;length--) position = horizontalStep(position, direction);
+        return position;
+    }
+
 //    moves only on 1 position
-    public Point horizontalMove(Point position, int direction) {
+    private Point horizontalStep(Point position, int direction) {
         String currentLine = lines.get(position.y);
         int newY = position.y;
         int newX = position.x + direction;
+
         if (newX > currentLine.length()) {
             if (newY >= lastLineIndex()) return position;
             else return new Point(0, position.y + 1);
@@ -129,15 +135,6 @@ public class EditorTextStorage {
         else if (point.y >= lines.size()) return endOfText();
         else return new Point(Math.min(point.x, lines.get(point.y).length()), point.y);
     }
-
-//    public String textInSelection(EditorTextBox.Selection selection) {
-//        if (selection.isEmpty()) return "";
-//        Point start = selection.startEdge();
-//        Point end = selection.endEdge();
-//        StringBuilder result = new StringBuilder();
-//        Iterator<String> iter = lines.listIterator(start.y);
-//        result.append(iter.next().substring(end.))
-//    }
 
 //    correct string-split
     private static List<String> buildLinesList(String str) {

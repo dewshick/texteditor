@@ -2,7 +2,7 @@ package editor;
 
 import static org.junit.Assert.assertEquals;
 
-import gui.EditorTextStorage;
+import gui.state.EditorTextStorage;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -15,7 +15,7 @@ import java.util.List;
  */
 
 //TODO refactor all the combinatorics if there will be time for it
-public class TextEditorTest {
+public class TextStorageTest {
     EditorTextStorage textStorage;
     String text;
 
