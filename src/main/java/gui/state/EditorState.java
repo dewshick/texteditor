@@ -1,9 +1,7 @@
 package gui.state;
 
-import java.util.List;
 import java.awt.*;
 import java.awt.event.KeyEvent;
-import java.util.Arrays;
 import java.util.Optional;
 
 /**
@@ -34,6 +32,7 @@ public class EditorState {
     public void paste(String text) {
         selection.removeTextUnderSelection();
         textStorage.addText(caret.relativePosition, text);
+        caret.setRelativePosition(textStorage.horizontalMove(caret.relativePosition, text.length()), false);
     }
 
     public void type(char typed) {
@@ -43,30 +42,27 @@ public class EditorState {
                 textStorage.getLines().get(caret.relativePosition.y).length() > caret.relativePosition.x)
             textStorage.removeText(caret.positionAfterCaret(), 1);
         textStorage.addText(caret.relativePosition, typed + "");
-        caret.move(CaretDirection.RIGHT);
+        caret.move(CaretDirection.RIGHT, false);
     }
 
     public void moveCaret(Point coords, boolean extendSelection) {
-        caret.setRelativePosition(textStorage.closestCaretPosition(coords));
-        if (extendSelection) selection.extendSelection();
-        else selection.dropSelection();
+        caret.setRelativePosition(textStorage.closestCaretPosition(coords), extendSelection);
     }
 
     public void moveCaret(CaretDirection direction, boolean extendSelection) {
         if (extendSelection) {
-            caret.move(direction);
-            selection.extendSelection();
+            caret.move(direction, true);
         } else {
             if (!selection.isEmpty()) {
                 if (direction.getKeyCode() == KeyEvent.VK_LEFT)
-                    caret.relativePosition = selection.startPoint();
+                    caret.setRelativePosition(selection.startPoint(), false);
                 else if (direction.getKeyCode() == KeyEvent.VK_RIGHT)
-                    caret.relativePosition = selection.endPoint();
-                else caret.move(direction);
+                    caret.setRelativePosition(selection.endPoint(), false);
+                else caret.move(direction, false);
                 selection.dropSelection();
 
             } else {
-                caret.move(direction);
+                caret.move(direction, false);
             }
         }
     }
@@ -87,7 +83,7 @@ public class EditorState {
         if (caret.relativePosition.equals(textStorage.beginningOfText()) && selection.isEmpty())
             return;
         if (selection.isEmpty()) {
-            caret.move(CaretDirection.LEFT);
+            caret.move(CaretDirection.LEFT, false);
             textStorage.removeText(caret.positionAfterCaret(), 1);
         } else selection.removeTextUnderSelection();
     }
@@ -107,7 +103,10 @@ public class EditorState {
             insertMode = false;
         }
 
-        public void setRelativePosition(Point relativePosition) { this.relativePosition = relativePosition; }
+        public void setRelativePosition(Point relativePosition, boolean extendSelection) {
+            this.relativePosition = relativePosition;
+            if (!extendSelection) selection.dropSelection();
+        }
 
         private Point relativePosition;
 
@@ -127,7 +126,7 @@ public class EditorState {
 
         Point positionAfterCaret() { return relativePosition; }
 
-        void move(CaretDirection direction) {
+        void move(CaretDirection direction, boolean extendSelection) {
             Point updatedPosition = (Point) relativePosition.clone();
             switch (direction) {
                 case UP:
@@ -139,44 +138,33 @@ public class EditorState {
                 case RIGHT:
                     updatedPosition = textStorage.horizontalMove(updatedPosition, 1); break;
             }
-            setRelativePosition(updatedPosition);
+            setRelativePosition(updatedPosition, extendSelection);
         }
     }
 
     public class Selection {
         public Selection() { dropSelection(); }
 
-        public void dropSelection(Point point) {
-            this.initialPoint = point;
-            this.edgePoint = point;
+        public void dropSelection() {
+            this.initialPoint = caret.getRelativePosition();
         }
 
-        public void dropSelection() { dropSelection(caret.relativePosition); }
+        public boolean isEmpty() { return initialPoint.equals(caret.relativePosition); }
 
-        public void extendSelection() { edgePoint = caret.relativePosition; }
+        public Point startPoint() { return isCaretAfterEdge() ? caret.relativePosition : initialPoint; }
 
-        public void switchCaretsWithCurrent() {
-            edgePoint = initialPoint;
-            initialPoint = caret.relativePosition;
-        }
+        public Point endPoint() { return isCaretAfterEdge() ? initialPoint : caret.relativePosition; }
 
-        public boolean isEmpty() { return initialPoint.equals(edgePoint); }
-
-        public Point startPoint() { return isInitialAfterEdge() ? edgePoint : initialPoint; }
-
-        public Point endPoint() { return isInitialAfterEdge() ? initialPoint : edgePoint; }
-
-        private boolean isInitialAfterEdge() {
-            return initialPoint.y > edgePoint.y || (initialPoint.y == edgePoint.y && initialPoint.x > edgePoint.x);
+        private boolean isCaretAfterEdge() {
+            return initialPoint.y > caret.relativePosition.y ||
+                    (initialPoint.y == caret.relativePosition.y && initialPoint.x > caret.relativePosition.x);
         }
 
         private void removeTextUnderSelection() {
             textStorage.removeText(this);
-            dropSelection(startPoint());
-            caret.relativePosition = startPoint();
+            caret.setRelativePosition(startPoint(), false);
         }
 
         private Point initialPoint;
-        private Point edgePoint;
     }
 }

@@ -46,9 +46,7 @@ public class EditorTextStorage {
     }
 
     public void removeText(Point position, int length) {
-        Point end = position;
-        for (;length > 0;length--) end = horizontalMove(end, 1);
-        removeText(position, end);
+        removeText(position, horizontalMove(position, length));
     }
 
     private void removeText(Point start, Point end) {
@@ -105,11 +103,20 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
+//    TODO: this can be easily optimized
+    public Point horizontalMove(Point position, int distance) {
+        int direction = distance > 0 ? 1 : -1;
+        int length = Math.abs(distance);
+        for (;length > 0;length--) position = horizontalStep(position, direction);
+        return position;
+    }
+
 //    moves only on 1 position
-    public Point horizontalMove(Point position, int direction) {
+    private Point horizontalStep(Point position, int direction) {
         String currentLine = lines.get(position.y);
         int newY = position.y;
         int newX = position.x + direction;
+
         if (newX > currentLine.length()) {
             if (newY >= lastLineIndex()) return position;
             else return new Point(0, position.y + 1);
