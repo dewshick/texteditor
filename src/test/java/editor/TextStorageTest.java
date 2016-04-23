@@ -169,6 +169,17 @@ public class TextStorageTest {
         assertStateIsCorrect();
     }
 
+    @Test
+    public void getTextTest() {
+        assertEquals(text, textStorage.getText(textStorage.beginningOfText(), textStorage.endOfText()));
+        String[] lines = text.split("\n");
+        assertEquals(lines[0] + "\n", textStorage.getText(textStorage.beginningOfText(), new Point(0,1)));
+        assertEquals(lines[0] +"\n" + lines[1] + "\n", textStorage.getText(textStorage.beginningOfText(), new Point(0,2)));
+        assertEquals(lines[0].substring(1) + "\n", textStorage.getText(new Point(1,0), new Point(0,1)));
+        assertEquals(lines[1].substring(1) + "\n", textStorage.getText(new Point(1,1), new Point(0, 2)));
+        assertEquals(lines[1].substring(1) + "\n" + lines[2].substring(0,1), textStorage.getText(new Point(1,1), new Point(1, 2)));
+    }
+
     private void pasteText(Point coords, String addedText) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + addedText + text.substring(splitIndex);

@@ -77,7 +77,7 @@ public class EditorTextStorage {
                 result.append('\n');
                 result.append(lines.get(i));
             }
-            result.append(lines.get(end.y).substring(0, end.x));
+            result.append("\n" + lines.get(end.y).substring(0, end.x));
         }
         return result.toString();
     }
