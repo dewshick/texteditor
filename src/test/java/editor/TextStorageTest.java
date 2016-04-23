@@ -15,7 +15,7 @@ import java.util.List;
  */
 
 //TODO refactor all the combinatorics if there will be time for it
-public class TextEditorTest {
+public class TextStorageTest {
     EditorTextStorage textStorage;
     String text;
 
