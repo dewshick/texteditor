@@ -1,5 +1,7 @@
 package gui.state;
 
+import syntax.document.SupportedSyntax;
+
 import java.awt.*;
 import java.awt.event.KeyEvent;
 import java.util.Optional;
@@ -8,8 +10,8 @@ import java.util.Optional;
  * Created by avyatkin on 22/04/16.
  */
 public class EditorState {
-    public EditorState() {
-        textStorage = new EditorTextStorage();
+    public EditorState(SupportedSyntax syntax) {
+        textStorage = new EditorTextStorage(syntax);
         caret = new Caret();
         selection = new Selection();
     }

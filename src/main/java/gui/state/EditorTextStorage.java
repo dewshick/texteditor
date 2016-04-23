@@ -1,8 +1,9 @@
 package gui.state;
 
-import gui.EditorComponent;
+import gui.view.EditorColors;
 import org.apache.commons.collections4.list.TreeList;
-
+import syntax.antlr.LexemeIndex;
+import syntax.document.SupportedSyntax;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -16,18 +17,31 @@ import java.util.ListIterator;
 public class EditorTextStorage {
     List<String> lines;
 
-    public EditorTextStorage() {
+    LexemeIndex index;
+    SupportedSyntax syntax;
+
+
+    public EditorTextStorage(SupportedSyntax syntax) {
         lines = new TreeList<>();
         lines.add("");
+        index = new LexemeIndex(syntax, "");
+        this.syntax = syntax;
     }
 
     public String getText() { return String.join("\n", lines); }
 
-    public void setText(String text) { this.lines = buildLinesList(text); }
+    public void setText(String text) {
+        this.lines = buildLinesList(text);
+        index = new LexemeIndex(syntax, text);
+    }
 
 //    TODO: use 2d int rectangle to return displayed area
 //    TODO: should be package-local
     public List<String> getLines() { return lines; }
+
+    public List<ColoredString> getColoredLine(int line) {
+        return index.getColoredLine(line);
+    }
 
     /**
      * Edit text
@@ -43,6 +57,8 @@ public class EditorTextStorage {
         } else
             newLines = buildLinesList(text);
         newLines.forEach(iter::add);
+
+        index.addText(getText(beginningOfText(), position).length(), text);
     }
 
     public void removeText(Point position, int length) {
@@ -50,6 +66,7 @@ public class EditorTextStorage {
     }
 
     private void removeText(Point start, Point end) {
+        index.removeText(getText(beginningOfText(), start).length(), getText(start, end).length());
         String updated = lines.get(start.y).substring(0, start.x) + lines.get(end.y).substring(end.x);
         ListIterator<String> iter = lines.listIterator(start.y);
         for (int i = start.y; i <= end.y; i++) {
@@ -137,7 +154,7 @@ public class EditorTextStorage {
     }
 
 //    correct string-split
-    private static List<String> buildLinesList(String str) {
+    public static List<String> buildLinesList(String str) {
         int initialIndex = 0;
         List<String> result = new ArrayList<>();
         for (int i = 0; i < str.length(); i++)

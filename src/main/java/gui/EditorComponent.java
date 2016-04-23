@@ -4,6 +4,8 @@ import gui.state.CaretDirection;
 import gui.state.EditorState;
 import gui.view.EditorRenderer;
 import gui.view.TextCoordUtils;
+import syntax.document.SupportedSyntax;
+
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.util.List;
@@ -25,8 +27,8 @@ public class EditorComponent extends JComponent implements Scrollable {
     TextCoordUtils coordUtils;
     EditorRenderer renderer;
 
-    public EditorComponent(Document doc) {
-        state = new EditorState();
+    public EditorComponent(SupportedSyntax syntax) {
+        state = new EditorState(syntax);
         coordUtils = new TextCoordUtils(this);
         renderer = new EditorRenderer(state, coordUtils);
 

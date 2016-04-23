@@ -1,5 +1,7 @@
 package syntax.antlr;
 
+import java.util.Optional;
+
 /**
  * Created by avyatkin on 04/04/16.
  */
@@ -8,6 +10,12 @@ public class Lexeme {
     private int distanceToNextToken;
     private int revision;
     private String type;
+
+    public Optional<Integer> getIndexInSplit() {
+        return indexInSplit;
+    }
+
+    private Optional<Integer> indexInSplit;
 
     public String getText() {
         return text;
@@ -45,13 +53,19 @@ public class Lexeme {
         return type;
     }
 
+
     public Lexeme(int offset, int distanceToNextToken, int size, String type, String text) {
+        this(offset, distanceToNextToken, size, type, text, Optional.empty());
+    }
+
+    public Lexeme(int offset, int distanceToNextToken, int size, String type, String text, Optional<Integer> indexInSplit) {
         this.offset = offset;
         this.distanceToNextToken = distanceToNextToken;
         this.revision = 0;
         this.size = size;
         this.type = type;
         this.text = text;
+        this.indexInSplit = indexInSplit;
     }
 
     @Override

@@ -1,5 +1,6 @@
 package gui.view;
 
+import gui.state.ColoredString;
 import gui.state.EditorState;
 import gui.state.EditorTextStorage;
 import java.awt.*;
@@ -28,9 +29,7 @@ public class EditorRenderer {
 //    TODO: do we need to pass rectangle?
     private List<Rectangle> selectionInBounds(Rectangle bounds) {
         List<Rectangle> result = new ArrayList<>();
-
         Dimension size = getPreferredSize();
-
         EditorState.Selection selection = state.getSelection();
 
         if (selection.isEmpty()) return result;
@@ -51,19 +50,30 @@ public class EditorRenderer {
         g.setFont(TextCoordUtils.FONT);
 
         Rectangle clip = g.getClipBounds();
-        g.setColor(EditorColors.BACKGROUND);
-        g.fillRect(clip.x, clip.y, clip.width, clip.height);
-        g.setColor(EditorColors.SELECTION);
-        selectionInBounds(clip).forEach(rect -> g.fillRect(rect.x, rect.y, rect.width, rect.height));
-        g.setColor(EditorColors.TEXT);
+        fillRectWithColor(g, clip, EditorColors.BACKGROUND);
+
+        selectionInBounds(clip).forEach(rect -> fillRectWithColor(g, rect, EditorColors.SELECTION));
 
         int xOffset = clip.x;
         int yOffset = utils.fontHeight();
+        int yCoord = 0;
 
+//        Rectangle bounds = utils.relativeRectangle(clip);
 //        TODO: render exact sublist of lines instead of iterating over whole list(faster and cleaner)
+//        yOffset = bounds.y * utils.fontHeight();
+//        int yIndex = bounds.y;
+//        List<String> lines = state.getTextStorage().getLines().subList(bounds.y, bounds.y + bounds.height);
+
         for (String line : state.getTextStorage().getLines()) {
-            if (yOffset >= clip.y) g.drawString(utils.stringInRelativeBounds(line, clip), xOffset, yOffset);
+            if (yOffset >= clip.y) { //g.drawString(utils.stringInRelativeBounds(line, clip), xOffset, yOffset);
+                int offset = 0;
+                for(ColoredString str :  state.getTextStorage().getColoredLine(yCoord)) {
+                    drawStringWithColor(g, str.getContent(), new Point(offset, yCoord), str.getColor());
+                    offset += str.getContent().length();
+                }
+            }
             yOffset += utils.fontHeight();
+            yCoord++;
             if (yOffset > clip.height + clip.y) break;
         }
         caretRenderer.renderCaret(g);
@@ -92,29 +102,34 @@ public class EditorRenderer {
 
 //            TODO: protected
         public void renderCaret(Graphics g) {
-//            TODO: SPECIFIC COLOR FOR CARET!
 //            TODO: SPECIFIC STATE MACHINE FOR COLORS/DEFAULT COLOR/WHATEVER TO MAINTAIN CORRECT STATE
 //            TODO: SEPARATE RENDERING AND HANDLING RELATIVE/ABSOLUTE COORDS FROM VIEW LOGIC
 //            TODO: RENDER ONLY DIFF
 
-            g.setColor(caret.isInInsertMode() ? EditorColors.INSERT_CARET : EditorColors.CARET);
-
-            g.fillRect(caretRect().x, caretRect().y, caretRect().width, caretRect().height);
+            Color caretColor = caret.isInInsertMode() ? EditorColors.INSERT_CARET : EditorColors.CARET;
+            fillRectWithColor(g, caretRect(), caretColor);
             Point relativePosition = caret.getRelativePosition();
             EditorTextStorage textStorage = state.getTextStorage();
 
             if (caret.isInInsertMode()) {
                 String relevantLine = textStorage.getLines().get(relativePosition.y);
                 if (relevantLine.length() <= relativePosition.x) return;
-                g.setColor(EditorColors.TEXT_OVER_INSERT_CARET);
                 Point textEnd = new Point(relativePosition.x + 1, relativePosition.y);
                 String text = textStorage.getText(relativePosition, textEnd);
-                g.setFont(TextCoordUtils.FONT);
-                Point textCoords = utils.absoluteTextCoords(relativePosition);
-                g.drawString(text, textCoords.x, textCoords.y);
+                drawStringWithColor(g, text, relativePosition, EditorColors.TEXT_OVER_INSERT_CARET);
             }
         }
+    }
 
+    private void fillRectWithColor(Graphics g, Rectangle rect, Color clr) {
+        g.setColor(clr);
+        g.fillRect(rect.x, rect.y, rect.width, rect.height);
+    }
 
+    private void drawStringWithColor(Graphics g, String str, Point relativeCoords, Color color) {
+        g.setFont(TextCoordUtils.FONT);
+        g.setColor(color);
+        Point absoluteCoords = utils.absoluteTextCoords(relativeCoords);
+        g.drawString(str, absoluteCoords.x, absoluteCoords.y);
     }
 }

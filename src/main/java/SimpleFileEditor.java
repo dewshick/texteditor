@@ -1,5 +1,7 @@
 import gui.EditorComponent;
 import syntax.document.CodeDocumentFactory;
+import syntax.document.SupportedSyntax;
+
 import java.io.*;
 import java.awt.*;
 import java.util.Scanner;
@@ -12,7 +14,7 @@ public class SimpleFileEditor extends JPanel {
 
     private static final EditorComponent initEditableArea() {
         final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
-        EditorComponent editableArea = new EditorComponent(CodeDocumentFactory.forJs());
+        EditorComponent editableArea = new EditorComponent(SupportedSyntax.ECMASCRIPT);
 //        editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
@@ -106,9 +108,9 @@ public class SimpleFileEditor extends JPanel {
     }
 
     private String readDefaultFile() {
-        String path = "/Users/avyatkin/Desktop/big_src.java";
+//        String path = "/Users/avyatkin/Desktop/big_src.java";
 //        String path = "/Users/avyatkin/Desktop/ajax.js";
-//        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
+        String path = "/Users/avyatkin/Desktop/jquery-1.12.2.js";
 //        String path = "/Users/avyatkin/Code/fun/oracle_swing_tutorial/src/main/java/syntax/document/CodeDocumentFactory.java";
         try {
             Scanner scanner = new Scanner(new File(path));
