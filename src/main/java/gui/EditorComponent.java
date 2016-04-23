@@ -65,12 +65,9 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     private int getValueForOrientation(int orientation, int horizontal, int vertical) {
         switch (orientation) {
-            case SwingConstants.HORIZONTAL:
-                return horizontal;
-            case SwingConstants.VERTICAL:
-                return vertical;
-            default:
-                throw new IllegalArgumentException("Unexpected orientation: " + orientation);
+            case SwingConstants.HORIZONTAL: return horizontal;
+            case SwingConstants.VERTICAL: return vertical;
+            default: throw new IllegalArgumentException("Unexpected orientation: " + orientation);
         }
     }
 
@@ -94,11 +91,6 @@ public class EditorComponent extends JComponent implements Scrollable {
         });
     }
 
-    /**
-     * Caret
-     */
-
-
     List<Integer> ignoredKeys = Arrays.asList(KeyEvent.VK_DELETE, KeyEvent.VK_BACK_SPACE);
 
 
@@ -113,7 +105,7 @@ public class EditorComponent extends JComponent implements Scrollable {
     }
 
 //     TODO: accept rectangle in relative coords with diff(recieved from state after state change) to be able to repaint only diff
-//     state will return
+//     TODO: state will return rectangles to repaint
     public void updateView(List<Rectangle> rectangles, boolean caretMoved) {
         if (caretMoved && !getVisibleRect().contains(renderer.getCaretRenderer().caretRect()))
             repaint();
@@ -183,6 +175,38 @@ public class EditorComponent extends JComponent implements Scrollable {
             public void actionPerformed(ActionEvent e) {
                 state.switchCaretMode();
                 updateView(false);
+            }
+        });
+
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                state.pageUp(coordUtils.relativeRectangle(getVisibleRect()));
+                updateView(true);
+            }
+        });
+
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                state.pageDown(coordUtils.relativeRectangle(getVisibleRect()));
+                updateView(true);
+            }
+        });
+
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                state.goToBeginning();
+                updateView(true);
+            }
+        });
+
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                state.goToEnd();
+                updateView(true);
             }
         });
 

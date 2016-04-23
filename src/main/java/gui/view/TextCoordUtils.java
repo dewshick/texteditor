@@ -34,6 +34,14 @@ public class TextCoordUtils {
         return relativeCoords;
     }
 
+    public Rectangle relativeRectangle(Rectangle rect) {
+        return new Rectangle(
+                rect.x / fontWidth(),
+                rect.y/ fontHeight(),
+                rect.width / fontWidth(),
+                rect.height / fontHeight());
+    }
+
     public Point absoluteCoords(Point point) {
         return new Point(point.x * fontWidth(),
                 point.y * fontHeight() + (fontHeight() - fontMetrics().getAscent()));

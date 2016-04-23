@@ -93,6 +93,27 @@ public class EditorState {
         return Optional.of(textStorage.getText(selection.startPoint(), selection.endPoint()));
     }
 
+    public void pageUp(Rectangle relativeVisible) {
+        moveCaretToClosestPosition(new Point(relativeVisible.x, relativeVisible.y - relativeVisible.height));
+    }
+
+    public void pageDown(Rectangle relativeVisible) {
+        moveCaretToClosestPosition(new Point(relativeVisible.x, relativeVisible.y + 2 * relativeVisible.height));
+    }
+
+    public void goToBeginning() {
+        moveCaretToClosestPosition(textStorage.beginningOfText());
+    }
+
+    public void goToEnd() {
+        moveCaretToClosestPosition(textStorage.endOfText());
+    }
+
+    private void moveCaretToClosestPosition(Point toMoveTo) {
+        caret.setRelativePosition(textStorage.closestCaretPosition(toMoveTo), false);
+    }
+
+
 //    handled by pageUp/pageDown
 //    public void moveScreen(boolean down, boolean tillEdge) { }
 
