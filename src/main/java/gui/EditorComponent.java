@@ -3,7 +3,7 @@ package gui;
 import gui.state.CaretDirection;
 import gui.state.EditorState;
 import gui.view.EditorRenderer;
-import gui.view.ViewParams;
+import gui.view.ViewUtils;
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.util.List;
@@ -22,12 +22,12 @@ public class EditorComponent extends JComponent implements Scrollable {
     public String getText() { return state.getTextStorage().getText(); }
 
     EditorState state;
-    ViewParams viewParams;
+    ViewUtils viewParams;
     EditorRenderer renderer;
 
     public EditorComponent(Document doc) {
         state = new EditorState();
-        viewParams = new ViewParams(this);
+        viewParams = new ViewUtils(this);
         renderer = new EditorRenderer(state, viewParams);
 
         editable = true;
@@ -104,9 +104,15 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     public void paintComponent(Graphics g) {
         super.paintComponent(g);
-        renderer.paintComponent(this, g);
+        renderer.paintState(g);
     }
 
+    public void handleCaretMovement(boolean caretMoved) {
+        if (caretMoved) {
+            scrollRectToVisible(renderer.getCaretRenderer().caretRect());
+            repaint();
+        }
+    }
 
     private void addCaretRelatedActions() {
         Arrays.asList(CaretDirection.values()).forEach(
@@ -114,14 +120,14 @@ public class EditorComponent extends JComponent implements Scrollable {
                     bindKeyToAction(caretDir.getKeyCode(), new AbstractAction() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            renderer.getCaretRenderer().updateCaret(EditorComponent.this, caretDir, false);
+                            handleCaretMovement(state.moveCaret(caretDir, false));
                         }
                     });
 
                     bindKeyToAction(caretDir.getKeyCode(), KeyEvent.SHIFT_DOWN_MASK, new AbstractAction() {
                         @Override
                         public void actionPerformed(ActionEvent e) {
-                            renderer.getCaretRenderer().updateCaret(EditorComponent.this, caretDir, true);
+                            handleCaretMovement(state.moveCaret(caretDir, true));
                         }
                     });
                 });
@@ -185,7 +191,7 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void mouseDragged(MouseEvent e) {
                 if (SwingUtilities.isLeftMouseButton(e)) {
-                    renderer.getCaretRenderer().updateCaret(EditorComponent.this, viewParams.getRelativeMousePosition(e), true);
+                    handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), true));
                 }
             }
         });
@@ -194,13 +200,13 @@ public class EditorComponent extends JComponent implements Scrollable {
             //TODO: selection if mouse moved in pressed state
             @Override
             public void mouseClicked(MouseEvent e) {
-                renderer.getCaretRenderer().updateCaret(EditorComponent.this, viewParams.getRelativeMousePosition(e), e.isShiftDown());
+                handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), e.isShiftDown()));
             }
 
             @Override
             public void mousePressed(MouseEvent e) {
                 if (e.isShiftDown()) return;
-                renderer.getCaretRenderer().updateCaret(EditorComponent.this, viewParams.getRelativeMousePosition(e), false);
+                handleCaretMovement(state.moveCaret(viewParams.relativeMousePosition(e), false));
             }
         });
     }

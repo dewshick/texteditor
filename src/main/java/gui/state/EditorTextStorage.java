@@ -129,15 +129,6 @@ public class EditorTextStorage {
         else return new Point(Math.min(point.x, lines.get(point.y).length()), point.y);
     }
 
-//    public String textInSelection(EditorTextBox.Selection selection) {
-//        if (selection.isEmpty()) return "";
-//        Point start = selection.startPoint();
-//        Point end = selection.endPoint();
-//        StringBuilder result = new StringBuilder();
-//        Iterator<String> iter = lines.listIterator(start.y);
-//        result.append(iter.next().substring(end.))
-//    }
-
 //    correct string-split
     private static List<String> buildLinesList(String str) {
         int initialIndex = 0;

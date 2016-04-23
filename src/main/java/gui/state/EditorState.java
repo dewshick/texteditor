@@ -44,13 +44,16 @@ public class EditorState {
         caret.move(CaretDirection.RIGHT);
     }
 
-    public void moveCaret(Point coords, boolean extendSelection) {
+    public boolean moveCaret(Point coords, boolean extendSelection) {
+        Point oldCoords = (Point) caret.relativePosition.clone();
         caret.setRelativePosition(textStorage.closestCaretPosition(coords));
         if (extendSelection) selection.extendSelection();
         else selection.dropSelection();
+        return !oldCoords.equals(caret.relativePosition);
     }
 
-    public void moveCaret(CaretDirection direction, boolean extendSelection) {
+    public boolean moveCaret(CaretDirection direction, boolean extendSelection) {
+        Point oldCoords = (Point) caret.relativePosition.clone();
         if (extendSelection) {
             caret.move(direction);
             selection.extendSelection();
@@ -66,6 +69,7 @@ public class EditorState {
 
             selection.dropSelection();
         }
+        return !oldCoords.equals(caret.relativePosition);
     }
 
     public void switchCaretMode() {
