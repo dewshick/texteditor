@@ -6,13 +6,12 @@ import gui.view.EditorRenderer;
 import gui.view.TextCoordUtils;
 import syntax.document.SupportedSyntax;
 
+import java.util.*;
 import javax.swing.*;
-import javax.swing.text.Document;
-import java.util.List;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
-import java.util.Optional;
+import java.util.List;
+import java.util.Timer;
 
 /**
  * Created by avyatkin on 06/04/16.
@@ -38,6 +37,7 @@ public class EditorComponent extends JComponent implements Scrollable {
         setDoubleBuffered(true);
         addFocusRelatedListeners();
         addCaretRelatedActions();
+        addCaretBlink();
     }
 
     public void setEditable(boolean editable) { this.editable = editable; }
@@ -252,6 +252,19 @@ public class EditorComponent extends JComponent implements Scrollable {
                 updateView(true);
             }
         });
+    }
+
+    private void addCaretBlink() {
+        Timer t = new Timer();
+        t.scheduleAtFixedRate(new TimerTask() {
+            @Override
+            public void run() {
+                SwingUtilities.invokeLater(() -> {
+                    if (!state.getCaret().isInInsertMode())
+                        repaint(renderer.getCaretRenderer().caretRect());
+                });
+            }
+        },0, EditorState.Caret.CARET_BLINK_TIME);
     }
 
     private void bindKeyToAction(int key, Action action) { bindKeyToAction(key, 0, action); }

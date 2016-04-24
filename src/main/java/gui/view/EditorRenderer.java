@@ -105,7 +105,7 @@ public class EditorRenderer {
 //            TODO: SPECIFIC STATE MACHINE FOR COLORS/DEFAULT COLOR/WHATEVER TO MAINTAIN CORRECT STATE
 //            TODO: SEPARATE RENDERING AND HANDLING RELATIVE/ABSOLUTE COORDS FROM VIEW LOGIC
 //            TODO: RENDER ONLY DIFF
-
+            if (!caret.shouldBeRendered()) return;
             Color caretColor = caret.isInInsertMode() ? EditorColors.INSERT_CARET : EditorColors.CARET;
             fillRectWithColor(g, caretRect(), caretColor);
             Point relativePosition = caret.getRelativePosition();

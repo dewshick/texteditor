@@ -24,7 +24,7 @@ public enum SupportedSyntax {
         );
     }
 
-    public <T> T oneOf(T forJava, T forJs) {
+    private <T> T oneOf(T forJava, T forJs) {
         switch (this) {
             case JAVA:
                 return forJava;

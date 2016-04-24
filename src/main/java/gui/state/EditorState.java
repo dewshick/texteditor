@@ -4,6 +4,8 @@ import syntax.document.SupportedSyntax;
 
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.time.Instant;
+import java.time.LocalDate;
 import java.util.Optional;
 
 /**
@@ -23,13 +25,19 @@ public class EditorState {
     Selection selection;
 
     @Deprecated
-    public EditorTextStorage getTextStorage() { return textStorage; }
+    public EditorTextStorage getTextStorage() {
+        return textStorage;
+    }
 
     @Deprecated
-    public Caret getCaret() { return caret; }
+    public Caret getCaret() {
+        return caret;
+    }
 
     @Deprecated
-    public Selection getSelection() { return selection; }
+    public Selection getSelection() {
+        return selection;
+    }
 
     public void paste(String text) {
         selection.removeTextUnderSelection();
@@ -119,64 +127,95 @@ public class EditorState {
 //    handled by pageUp/pageDown
 //    public void moveScreen(boolean down, boolean tillEdge) { }
 
-//    TODO: NOT PUBLIC
+    //    TODO: NOT PUBLIC
     public class Caret {
+        public static final long CARET_BLINK_TIME = 500;
+        public static final long CARET_PERSIST_TIME = 1000;
+
         Caret() {
+            lastMoveTimestamp = System.currentTimeMillis();
             relativePosition = new Point(0, 0);
             insertMode = false;
         }
 
         public void setRelativePosition(Point relativePosition, boolean extendSelection) {
             this.relativePosition = relativePosition;
+            this.lastMoveTimestamp = System.currentTimeMillis();
             if (!extendSelection) selection.dropSelection();
         }
 
+        public boolean shouldBeRendered() {
+            if (insertMode) return true;
+            long timeDiff = System.currentTimeMillis() - lastMoveTimestamp;
+            return timeDiff < CARET_PERSIST_TIME || (((timeDiff - CARET_PERSIST_TIME) / CARET_BLINK_TIME) % 2 == 0);
+        }
+
+        private long lastMoveTimestamp;
+
         private Point relativePosition;
 
-//    should be used in renderer
-    @Deprecated
-    public boolean isInInsertMode() { return insertMode; }
+        //    should be used in renderer
+        @Deprecated
+        public boolean isInInsertMode() {
+            return insertMode;
+        }
 
-//    should be used in renderer
-    @Deprecated
-    public Point getRelativePosition() { return relativePosition; }
+        //    should be used in renderer
+        @Deprecated
+        public Point getRelativePosition() {
+            return relativePosition;
+        }
 
-    private boolean insertMode;
+        private boolean insertMode;
 
         public void switchInsertMode() {
             insertMode = !insertMode;
         }
 
-        Point positionAfterCaret() { return relativePosition; }
+        Point positionAfterCaret() {
+            return relativePosition;
+        }
 
         void move(CaretDirection direction, boolean extendSelection) {
             Point updatedPosition = (Point) relativePosition.clone();
             switch (direction) {
                 case UP:
-                    updatedPosition = textStorage.verticalMove(updatedPosition, -1); break;
+                    updatedPosition = textStorage.verticalMove(updatedPosition, -1);
+                    break;
                 case DOWN:
-                    updatedPosition = textStorage.verticalMove(updatedPosition, 1); break;
+                    updatedPosition = textStorage.verticalMove(updatedPosition, 1);
+                    break;
                 case LEFT:
-                    updatedPosition = textStorage.horizontalMove(updatedPosition, -1); break;
+                    updatedPosition = textStorage.horizontalMove(updatedPosition, -1);
+                    break;
                 case RIGHT:
-                    updatedPosition = textStorage.horizontalMove(updatedPosition, 1); break;
+                    updatedPosition = textStorage.horizontalMove(updatedPosition, 1);
+                    break;
             }
             setRelativePosition(updatedPosition, extendSelection);
         }
     }
 
     public class Selection {
-        public Selection() { dropSelection(); }
+        public Selection() {
+            dropSelection();
+        }
 
         public void dropSelection() {
             this.initialPoint = caret.getRelativePosition();
         }
 
-        public boolean isEmpty() { return initialPoint.equals(caret.relativePosition); }
+        public boolean isEmpty() {
+            return initialPoint.equals(caret.relativePosition);
+        }
 
-        public Point startPoint() { return isCaretAfterEdge() ? caret.relativePosition : initialPoint; }
+        public Point startPoint() {
+            return isCaretAfterEdge() ? caret.relativePosition : initialPoint;
+        }
 
-        public Point endPoint() { return isCaretAfterEdge() ? initialPoint : caret.relativePosition; }
+        public Point endPoint() {
+            return isCaretAfterEdge() ? initialPoint : caret.relativePosition;
+        }
 
         private boolean isCaretAfterEdge() {
             return initialPoint.y > caret.relativePosition.y ||
