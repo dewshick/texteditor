@@ -79,7 +79,11 @@ public class EditorComponent extends JComponent implements Scrollable {
      */
 
     public Dimension getPreferredSize() {
-        return renderer.getPreferredSize();
+        Dimension rendererPreferredSize = renderer.getPreferredSize();
+        Rectangle visibleRect = getVisibleRect();
+        return new Dimension(
+                Math.max(visibleRect.width, rendererPreferredSize.width),
+                Math.max(visibleRect.height, rendererPreferredSize.height));
     }
 
     /**
