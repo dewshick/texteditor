@@ -1,5 +1,6 @@
 package syntax.antlr;
 
+import com.sun.tools.javac.util.Pair;
 import gui.state.ColoredString;
 import gui.view.EditorColors;
 import org.apache.commons.collections4.list.TreeList;
@@ -79,7 +80,9 @@ public class LexemeIndex {
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
     public List<Lexeme> addText(int offset, String newText) {
-        ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
+        Pair<ListIterator<Lexeme>, Integer> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+        ListIterator<Lexeme> oldLexemeIterator = iteratorWithOffset.fst;
+
         String extendedText = newText;
         int updatedLexemeOffset = 0;
         if (oldLexemeIterator.hasNext()) {
@@ -98,7 +101,9 @@ public class LexemeIndex {
     }
 
     public List<Lexeme> removeText(int offset, int length) {
-        ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
+        Pair<ListIterator<Lexeme>, Integer> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+        ListIterator<Lexeme> oldLexemeIterator = iteratorWithOffset.fst;
+        int lexemeOffset = iteratorWithOffset.snd;
         if (oldLexemeIterator.hasNext()) {
             StringBuilder modifiedTextBuilder = new StringBuilder();
             Lexeme affected = oldLexemeIterator.next();
@@ -120,14 +125,19 @@ public class LexemeIndex {
     }
 
 
-    private ListIterator<Lexeme> beforeFirstAffectedLexeme(int offset) {
+    private Pair<ListIterator<Lexeme>, Integer> beforeFirstAffectedLexeme(int offset) {
         ListIterator<Lexeme> iterator = lexemes.listIterator();
-        if (lexemes.isEmpty()) return iterator;
+        int lexemeOffset = 0;
+        if (lexemes.isEmpty()) return new Pair<>(iterator, lexemeOffset);
         Function<Lexeme, Integer> lexemeEnd = lx -> lx.getOffset() + lx.getDistanceToNextToken();
         Lexeme currentLexeme = iterator.next();
-        while (iterator.hasNext() && lexemeEnd.apply(currentLexeme) < offset) currentLexeme = iterator.next();
+        while (iterator.hasNext() && lexemeEnd.apply(currentLexeme) < offset) {
+            lexemeOffset += currentLexeme.getSize();
+            currentLexeme = iterator.next();
+        }
         iterator.previous();
-        return iterator;
+        lexemeOffset -= currentLexeme.getSize();
+        return new Pair<>(iterator, lexemeOffset);
     }
 
     private InputStream stringInputStream(String input) {
@@ -240,6 +250,68 @@ public class LexemeIndex {
             } catch (IOException e) {
                 throw new RuntimeException(e); //impossible
             }
+        }
+    }
+
+    class LexemeWithOffset {
+
+    }
+
+    class ListIteratorWithOffset implements ListIterator<Lexeme> {
+        ListIterator<Lexeme> listIterator;
+        int offset;
+
+        @Override
+        public boolean hasNext() {
+            return listIterator.hasNext();
+        }
+
+        @Override
+        public Lexeme next() {
+            if (listIterator.hasNext()) {
+                Lexeme next = listIterator.next();
+                offset += next.getSize();
+                return next;
+            }
+            return listIterator.next();
+        }
+
+        @Override
+        public boolean hasPrevious() {
+            if (listIterator.hasPrevious()) {
+
+            }
+            return listIterator.hasPrevious();
+        }
+
+        @Override
+        public Lexeme previous() {
+            return listIterator.previous();
+        }
+
+        @Override
+        public int nextIndex() {
+            return listIterator.nextIndex();
+        }
+
+        @Override
+        public int previousIndex() {
+            return listIterator.previousIndex();
+        }
+
+        @Override
+        public void remove() {
+            listIterator.remove();
+        }
+
+        @Override
+        public void set(Lexeme lexeme) {
+            listIterator.set(lexeme);
+        }
+
+        @Override
+        public void add(Lexeme lexeme) {
+            listIterator.add(lexeme);
         }
     }
 }
