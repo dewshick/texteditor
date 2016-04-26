@@ -1,5 +1,8 @@
 package syntax.antlr;
 
+import gui.state.ColoredString;
+import gui.view.EditorColors;
+import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.io.input.ReaderInputStream;
 import syntax.antlr.ecmascript.ECMAScriptLexer;
 import org.antlr.v4.runtime.ANTLRInputStream;
@@ -7,6 +10,8 @@ import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 import syntax.antlr.java.JavaLexer;
 import syntax.document.SupportedSyntax;
+import syntax.document.SyntaxColoring;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
@@ -18,9 +23,7 @@ import java.util.function.Function;
  * Created by avyatkin on 01/04/16.
  */
 public class LexemeIndex {
-    public String getTokenType(Token t) {
-        return lexer.getVocabulary().getDisplayName(t.getType());
-    }
+    public String getTokenType(Token t) { return lexer.getVocabulary().getDisplayName(t.getType()); }
 
     Lexer lexer;
     SupportedSyntax syntax;
@@ -30,12 +33,41 @@ public class LexemeIndex {
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();
         lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t)));
+        rebuildLexemesByLines();
     }
 
     private List<Lexeme> lexemes;
 
-    public List<Lexeme> lexemes() {
-        return lexemes;
+    public List<Lexeme> lexemes() { return lexemes; }
+
+    List<List<ColoredString>> coloredLines;
+
+    public void rebuildLexemesByLines() {
+        SyntaxColoring coloring = EditorColors.forSyntax(syntax);
+
+        List<List<ColoredString>> result = new TreeList<>();
+        List<ColoredString> initialLine = new TreeList<>();
+        for (Lexeme lexeme: lexemes) {
+            ColoredString colored = coloring.colorizeLexeme(lexeme);
+            if (colored.containsNewlines()) {
+                int index = 0;
+                List<ColoredString> splitted = colored.splitByLines();
+                for (ColoredString line : colored.splitByLines()) {
+                    initialLine.add(line);
+                    if (index != splitted.size() - 1) {
+                        result.add(initialLine);
+                        initialLine = new TreeList<>();
+                    }
+                    index++;
+                }
+            } else initialLine.add(colored);
+        }
+        result.add(initialLine);
+        coloredLines = result;
+    }
+
+    public List<ColoredString> getColoredLine(int line) {
+        return coloredLines.get(line);
     }
 
     private Lexeme lexemeFromToken(Token current) {
@@ -57,11 +89,12 @@ public class LexemeIndex {
             int relativeOffset = offset - updatedLexemeOffset;
             extendedText = oldText.substring(0, relativeOffset) + newText + oldText.substring(relativeOffset);
         }
-
-        return new IncrementalRetokenizer(extendedText,
+        List<Lexeme> result = new IncrementalRetokenizer(extendedText,
                 oldLexemeIterator,
                 updatedLexemeOffset,
                 newText.length()).syncLexemes();
+        rebuildLexemesByLines();
+        return result;
     }
 
     public List<Lexeme> removeText(int offset, int length) {
@@ -78,7 +111,9 @@ public class LexemeIndex {
             if (affected.getOffset() > offset + length) oldLexemeIterator.previous();
             String modifiedText = modifiedTextBuilder.toString();
             modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
-            return new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
+            List<Lexeme> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
+            rebuildLexemesByLines();
+            return result;
         } else {
             return new LinkedList<>();
         }
@@ -192,14 +227,10 @@ public class LexemeIndex {
         private Lexer updatedCodeLexer(String init, Iterator<Lexeme> todo) {
             Enumeration readersEnum = new Enumeration<InputStream>() {
                 @Override
-                public boolean hasMoreElements() {
-                    return todo.hasNext();
-                }
+                public boolean hasMoreElements() { return todo.hasNext(); }
 
                 @Override
-                public InputStream nextElement() {
-                    return stringInputStream(todo.next().getText());
-                }
+                public InputStream nextElement() { return stringInputStream(todo.next().getText()); }
             };
 
             SequenceInputStream inputStream = new SequenceInputStream(readersEnum);
