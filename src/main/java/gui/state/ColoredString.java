@@ -1,5 +1,7 @@
 package gui.state;
 
+import org.apache.commons.collections4.list.TreeList;
+
 import java.util.List;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
@@ -11,10 +13,16 @@ import java.util.stream.Collectors;
 public class ColoredString {
     String content;
     Color color;
+    int indexInLexeme;
 
     public ColoredString(String content, Color color) {
+        this(content, color, 0);
+    }
+
+    private ColoredString(String content, Color color, int indexInLexeme) {
         this.content = content;
         this.color = color;
+        this.indexInLexeme = indexInLexeme;
     }
 
     public Color getColor() {
@@ -30,7 +38,12 @@ public class ColoredString {
     }
 
     public List<ColoredString> splitByLines() {
-        return EditorTextStorage.buildLinesList(content).stream().
-                map(str -> new ColoredString(str, color)).collect(Collectors.toList());
+        int lexemePartIndex = 0;
+        List<ColoredString> result = new TreeList<>();
+        for (String lexemePart : EditorTextStorage.buildLinesList(content, true)) {
+            result.add(new ColoredString(lexemePart, color, lexemePartIndex));
+            lexemePartIndex++;
+        }
+        return result;
     }
 }

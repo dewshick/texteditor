@@ -31,7 +31,7 @@ public class EditorTextStorage {
     public String getText() { return String.join("\n", lines); }
 
     public void setText(String text) {
-        this.lines = buildLinesList(text);
+        this.lines = buildLinesList(text, false);
         index = new LexemeIndex(syntax, text);
     }
 
@@ -52,10 +52,10 @@ public class EditorTextStorage {
         List<String> newLines;
         if (iter.hasNext()) {
             String updatedLine = iter.next();
-            newLines = buildLinesList(updatedLine.substring(0, position.x) + text + updatedLine.substring(position.x));
+            newLines = buildLinesList(updatedLine.substring(0, position.x) + text + updatedLine.substring(position.x), false);
             iter.remove();
         } else
-            newLines = buildLinesList(text);
+            newLines = buildLinesList(text, false);
         newLines.forEach(iter::add);
 
         index.addText(getText(beginningOfText(), position).length(), text);
@@ -154,15 +154,18 @@ public class EditorTextStorage {
     }
 
 //    correct string-split
-    public static List<String> buildLinesList(String str) {
+    public static List<String> buildLinesList(String str, boolean newlines) {
         int initialIndex = 0;
         List<String> result = new ArrayList<>();
         for (int i = 0; i < str.length(); i++)
             if (str.charAt(i) == '\n') {
-                result.add(str.substring(initialIndex, i));
+                int edgeIndex = newlines ? i+1 : i;
+                result.add(str.substring(initialIndex, edgeIndex));
                 initialIndex = i+1;
             }
         result.add(str.substring(initialIndex));
         return result;
     }
+
+
 }
