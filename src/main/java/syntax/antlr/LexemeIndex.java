@@ -101,7 +101,6 @@ public class LexemeIndex {
 
     public List<Lexeme> removeText(int offset, int length) {
         ListIteratorWithOffset oldLexemeIterator = beforeFirstAffectedLexeme(offset);
-
         if (oldLexemeIterator.hasNext()) {
             StringBuilder modifiedTextBuilder = new StringBuilder();
             LexemeWithOffset affected = oldLexemeIterator.next();
@@ -126,9 +125,8 @@ public class LexemeIndex {
     private ListIteratorWithOffset beforeFirstAffectedLexeme(int offset) {
         ListIteratorWithOffset iterator = new ListIteratorWithOffset(lexemes.listIterator());
         if (lexemes.isEmpty()) return iterator;
-
         LexemeWithOffset currentLexeme = iterator.next();
-        while (iterator.hasNext() && currentLexeme.getLexeme().getSize() + iterator.offset < offset) {
+        while (iterator.hasNext() && currentLexeme.getLexeme().getSize() + currentLexeme.getOffset() < offset) {
             currentLexeme = iterator.next();
         }
         iterator.previous();
