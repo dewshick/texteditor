@@ -24,9 +24,7 @@ public class Lexeme {
     private String text;
     private int size;
 
-    public int getOffset() {
-        return offset;
-    }
+    public int getOffset() { return offset; }
 
     public Lexeme shift(int off) {
         offset += off;
