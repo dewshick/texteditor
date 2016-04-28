@@ -13,11 +13,13 @@ import syntax.antlr.java.JavaLexer;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColoring;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.io.StringReader;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -77,8 +79,12 @@ public class LexemeIndex {
     }
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
+// TODO: accept Point coords instead of offset
     public List<Lexeme> addText(int offset, String newText) {
-        ListIteratorWithOffset oldLexemeIterator = beforeFirstAffectedLexeme(offset);
+        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+        ListIteratorWithOffset oldLexemeIterator = iteratorWithOffset.snd;
+        int relativeLexemeOffset = iteratorWithOffset.fst;
+        offset = -1;
 
         String extendedText = newText;
         int updatedLexemeOffset = 0;
@@ -86,7 +92,7 @@ public class LexemeIndex {
             LexemeWithOffset updatedLexeme = oldLexemeIterator.next();
             String oldText = updatedLexeme.getLexeme().getText();
             updatedLexemeOffset = updatedLexeme.getOffset();
-            int relativeOffset = offset - updatedLexemeOffset;
+            int relativeOffset = relativeLexemeOffset;
             extendedText = oldText.substring(0, relativeOffset) + newText + oldText.substring(relativeOffset);
         }
         List<LexemeWithOffset> result = new IncrementalRetokenizer(extendedText,
@@ -97,18 +103,25 @@ public class LexemeIndex {
         return result.stream().map(LexemeWithOffset::getLexeme).collect(Collectors.toList());
     }
 
+// TODO: accept Point coords instead of offset
     public List<Lexeme> removeText(int offset, int length) {
-        ListIteratorWithOffset oldLexemeIterator = beforeFirstAffectedLexeme(offset);
+        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+        ListIteratorWithOffset oldLexemeIterator = iteratorWithOffset.snd;
+        int relativeLexemeOffset = iteratorWithOffset.fst;
+        offset = -1;
+
         if (oldLexemeIterator.hasNext()) {
             StringBuilder modifiedTextBuilder = new StringBuilder();
             LexemeWithOffset affected = oldLexemeIterator.next();
             int newLexemesOffset = affected.getOffset();
-            int removedZoneOffset = offset - affected.getOffset();
-            while (affected.getOffset() <= offset + length) {
+            int removedZoneOffset = relativeLexemeOffset;
+            int absoluteRemovalOffset = affected.getOffset() + relativeLexemeOffset + length;
+
+            while (affected.getOffset() <= absoluteRemovalOffset) {
                 modifiedTextBuilder.append(affected.getLexeme().getText());
                 if (oldLexemeIterator.hasNext()) affected = oldLexemeIterator.next(); else break;
             }
-            if (affected.getOffset() > offset + length) oldLexemeIterator.previous();
+            if (affected.getOffset() > absoluteRemovalOffset) oldLexemeIterator.previous();
             String modifiedText = modifiedTextBuilder.toString();
             modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
             List<LexemeWithOffset> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
@@ -119,16 +132,17 @@ public class LexemeIndex {
         }
     }
 
-
-    private ListIteratorWithOffset beforeFirstAffectedLexeme(int offset) {
+// TODO: accept Point coords instead of offset
+    private Pair<Integer, ListIteratorWithOffset> beforeFirstAffectedLexeme(int offset) {
         ListIteratorWithOffset iterator = new ListIteratorWithOffset(lexemes);
-        if (lexemes.isEmpty()) return iterator;
+        if (lexemes.isEmpty()) return new Pair<>(0, iterator);
         LexemeWithOffset currentLexeme = iterator.next();
         while (iterator.hasNext() && currentLexeme.getLexeme().getSize() + currentLexeme.getOffset() < offset) {
             currentLexeme = iterator.next();
         }
         iterator.previous();
-        return iterator;
+        int offsetInsideLexeme = offset - currentLexeme.getOffset();
+        return new Pair<>(offsetInsideLexeme, iterator);
     }
 
     private InputStream stringInputStream(String input) {
