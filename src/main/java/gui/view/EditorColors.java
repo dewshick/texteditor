@@ -1,8 +1,8 @@
 package gui.view;
 
-import syntax.antlr.LexemeIndex;
-import syntax.brackets.BracketIndex;
-import syntax.document.CodeDocument;
+//import syntax.antlr.LexemeIndex;
+//import syntax.brackets.BracketIndex;
+//import syntax.document.CodeDocument;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColorRule;
 import syntax.document.SyntaxColoring;

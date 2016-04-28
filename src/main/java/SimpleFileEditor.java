@@ -1,5 +1,5 @@
 import gui.EditorComponent;
-import syntax.document.CodeDocumentFactory;
+//import syntax.document.CodeDocumentFactory;
 import syntax.document.SupportedSyntax;
 
 import java.io.*;

@@ -19,6 +19,7 @@ import java.io.SequenceInputStream;
 import java.io.StringReader;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 /**
  * Created by avyatkin on 01/04/16.
@@ -33,7 +34,7 @@ public class LexemeIndex {
         this.syntax = syntax;
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();
-        lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t)));
+        lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t).getLexeme()));
         rebuildLexemesByLines();
     }
 
@@ -49,19 +50,16 @@ public class LexemeIndex {
         List<List<ColoredString>> result = new TreeList<>();
         List<ColoredString> initialLine = new TreeList<>();
         for (Lexeme lexeme: lexemes) {
-            ColoredString colored = coloring.colorizeLexeme(lexeme);
-            if (colored.containsNewlines()) {
+            List<ColoredString> colored = coloring.colorizeLexeme(lexeme);
                 int index = 0;
-                List<ColoredString> splitted = colored.splitByLines();
-                for (ColoredString line : colored.splitByLines()) {
+                for (ColoredString line : colored) {
                     initialLine.add(line);
-                    if (index != splitted.size() - 1) {
+                    if (index != colored.size() - 1) {
                         result.add(initialLine);
                         initialLine = new TreeList<>();
                     }
                     index++;
                 }
-            } else initialLine.add(colored);
         }
         result.add(initialLine);
         coloredLines = result;
@@ -71,11 +69,11 @@ public class LexemeIndex {
         return coloredLines.get(line);
     }
 
-    private Lexeme lexemeFromToken(Token current) {
+    private LexemeWithOffset lexemeFromToken(Token current) {
         int offset = current.getStartIndex();
         int distanceToNextToken = current.getText().length();
         String tokenType = getTokenType(current);
-        return new Lexeme(offset, distanceToNextToken, distanceToNextToken, tokenType, current.getText());
+        return new LexemeWithOffset(new Lexeme(offset, distanceToNextToken, distanceToNextToken, tokenType, current.getText()),offset);
     }
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
@@ -91,12 +89,12 @@ public class LexemeIndex {
             int relativeOffset = offset - updatedLexemeOffset;
             extendedText = oldText.substring(0, relativeOffset) + newText + oldText.substring(relativeOffset);
         }
-        List<Lexeme> result = new IncrementalRetokenizer(extendedText,
-                oldLexemeIterator.getListIterator(),
+        List<LexemeWithOffset> result = new IncrementalRetokenizer(extendedText,
+                oldLexemeIterator,
                 updatedLexemeOffset,
                 newText.length()).syncLexemes();
         rebuildLexemesByLines();
-        return result;
+        return result.stream().map(LexemeWithOffset::getLexeme).collect(Collectors.toList());
     }
 
     public List<Lexeme> removeText(int offset, int length) {
@@ -113,9 +111,9 @@ public class LexemeIndex {
             if (affected.getOffset() > offset + length) oldLexemeIterator.previous();
             String modifiedText = modifiedTextBuilder.toString();
             modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
-            List<Lexeme> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator.getListIterator(), newLexemesOffset, -length).syncLexemes();
+            List<LexemeWithOffset> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
             rebuildLexemesByLines();
-            return result;
+            return result.stream().map(LexemeWithOffset::getLexeme).collect(Collectors.toList());
         } else {
             return new LinkedList<>();
         }
@@ -123,7 +121,7 @@ public class LexemeIndex {
 
 
     private ListIteratorWithOffset beforeFirstAffectedLexeme(int offset) {
-        ListIteratorWithOffset iterator = new ListIteratorWithOffset(lexemes.listIterator());
+        ListIteratorWithOffset iterator = new ListIteratorWithOffset(lexemes);
         if (lexemes.isEmpty()) return iterator;
         LexemeWithOffset currentLexeme = iterator.next();
         while (iterator.hasNext() && currentLexeme.getLexeme().getSize() + currentLexeme.getOffset() < offset) {
@@ -148,7 +146,7 @@ public class LexemeIndex {
     }
 
     class IncrementalRetokenizer {
-        IncrementalRetokenizer(String extendedText, ListIterator<Lexeme> oldLexemesIter, int newOffset, int oldOffset) {
+        IncrementalRetokenizer(String extendedText, ListIteratorWithOffset oldLexemesIter, int newOffset, int oldOffset) {
             updateLexer = updatedCodeLexer(extendedText, lexemes.listIterator(oldLexemesIter.nextIndex()));
             oldLexemesIterator = oldLexemesIter;
             newLexemeOffset = newOffset;
@@ -160,20 +158,21 @@ public class LexemeIndex {
         }
 
         private Lexer updateLexer;
-        private ListIterator<Lexeme> oldLexemesIterator;
+        private ListIteratorWithOffset oldLexemesIterator;
         private int newLexemeOffset;
         private int oldLexemeOffset;
         private boolean lexemesConverged;
-        private Optional<Lexeme> oldLexeme;
-        private Optional<Lexeme> newLexeme;
-        List<Lexeme> newLexemes;
+        private Optional<LexemeWithOffset> oldLexeme;
+        private Optional<LexemeWithOffset> newLexeme;
+        List<LexemeWithOffset> newLexemes;
 
-        public List<Lexeme> syncLexemes() {
+        public List<LexemeWithOffset> syncLexemes() {
             while (oldLexeme.isPresent() && newLexeme.isPresent()) {
                 while (oldLexeme.get().getOffset() < newLexeme.get().getOffset())
                     nextOldLexeme();
                 newLexemes.add(newLexeme.get());
-                if (oldLexeme.get().equals(newLexeme.get())) {
+                if (oldLexeme.get().getOffset() == newLexeme.get().getOffset() &&
+                        oldLexeme.get().getLexeme().equals(newLexeme.get().getLexeme())) {
                     lexemesConverged = true;
                     break;
                 } else nextUpdatedLexeme();
@@ -185,14 +184,12 @@ public class LexemeIndex {
                 processRemainingNewLexemes();
             }
             newLexemes.forEach(oldLexemesIterator::add);
-            oldLexemesIterator.forEachRemaining(lexeme -> lexeme.shift(oldLexemeOffset));
-
             return newLexemes;
         }
 
         private void removeOverlappingOldLexemesBeforeIterator() {
             while (oldLexemesIterator.hasPrevious()) {
-                Lexeme previousLexeme = oldLexemesIterator.previous();
+                LexemeWithOffset previousLexeme = oldLexemesIterator.previous();
                 if (previousLexeme.getOffset() >= newLexemeOffset)
                     oldLexemesIterator.remove();
                 else {
@@ -246,96 +243,5 @@ public class LexemeIndex {
         }
     }
 
-    class LexemeWithOffset {
-        public Lexeme getLexeme() {
-            return lexeme;
-        }
 
-        public int getOffset() {
-            return offset;
-        }
-
-        public LexemeWithOffset(Lexeme lexeme, int offset) {
-            this.lexeme = lexeme;
-            this.offset = offset;
-        }
-
-        Lexeme lexeme;
-        int offset;
-    }
-
-    class ListIteratorWithOffset implements ListIterator<LexemeWithOffset> {
-        public ListIteratorWithOffset(ListIterator<Lexeme> iter) {
-            listIterator = iter;
-            offset = 0;
-
-        }
-
-        public ListIterator<Lexeme> getListIterator() {
-            return listIterator;
-        }
-
-        ListIterator<Lexeme> listIterator;
-        int offset;
-
-        @Override
-        public boolean hasNext() {
-            return listIterator.hasNext();
-        }
-
-        @Override
-        public LexemeWithOffset next() {
-            if (listIterator.hasNext()) {
-                Lexeme next = listIterator.next();
-                LexemeWithOffset result = new LexemeWithOffset(next, offset);
-                offset += next.getSize();
-                return result;
-            }
-//            todo: need proper exception here
-            throw new RuntimeException("No next!");
-        }
-
-        @Override
-        public boolean hasPrevious() {
-            return listIterator.hasPrevious();
-        }
-
-        @Override
-        public LexemeWithOffset previous() {
-            if (listIterator.hasPrevious()) {
-                Lexeme previous = listIterator.previous();
-                offset -= previous.getSize();
-                return new LexemeWithOffset(previous, offset);
-            }
-            throw new RuntimeException("No previous!");
-        }
-
-        @Override
-        public int nextIndex() {
-            return listIterator.nextIndex();
-        }
-
-        @Override
-        public int previousIndex() {
-            return listIterator.previousIndex();
-        }
-
-        @Override
-        public void remove() {
-//            listIterator.remove();
-            throw new RuntimeException("Not implemented");
-        }
-
-        @Override
-        public void set(LexemeWithOffset lexeme) {
-//            listIterator.set(lexeme);
-            throw new RuntimeException("Not implemented");
-        }
-
-        @Override
-        public void add(LexemeWithOffset lexeme) {
-//            listIterator.add(lexeme);
-            throw new RuntimeException("Not implemented");
-        }
-    }
 }

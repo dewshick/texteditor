@@ -1,6 +1,8 @@
 package gui.state;
 
 import org.apache.commons.collections4.list.TreeList;
+import syntax.antlr.Lexeme;
+import syntax.document.SyntaxColoring;
 
 import java.util.List;
 import java.awt.*;
@@ -14,10 +16,6 @@ public class ColoredString {
     String content;
     Color color;
     int indexInLexeme;
-
-    public ColoredString(String content, Color color) {
-        this(content, color, 0);
-    }
 
     private ColoredString(String content, Color color, int indexInLexeme) {
         this.content = content;
@@ -33,15 +31,12 @@ public class ColoredString {
         return content;
     }
 
-    public boolean containsNewlines() {
-        return content.contains("\n");
-    }
-
-    public List<ColoredString> splitByLines() {
+    public static List<ColoredString> splitLexeme(Lexeme lexeme, SyntaxColoring coloring) {
         int lexemePartIndex = 0;
         List<ColoredString> result = new TreeList<>();
-        for (String lexemePart : EditorTextStorage.buildLinesList(content, true)) {
-            result.add(new ColoredString(lexemePart, color, lexemePartIndex));
+        Color lexemeColor = coloring.getColor(lexeme);
+        for (String lexemePart : EditorTextStorage.buildLinesList(lexeme.getText(), true)) {
+            result.add(new ColoredString(lexemePart, lexemeColor, lexemePartIndex));
             lexemePartIndex++;
         }
         return result;
