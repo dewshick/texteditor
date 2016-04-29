@@ -12,6 +12,7 @@ import syntax.antlr.iterators.LexemesIterator;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColoring;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -29,53 +30,88 @@ public class LexemesIteratorTest {
     Lexeme threeLinedLexeme = new Lexeme("long", "one long\nlong multiline\n lexeme");
     List<Lexeme> availableLexemes = Arrays.asList(oneLinedLexeme, twoLinedLexeme, threeLinedLexeme);
 
-    LexemesIterator iterator;
     ColoredLinesList lines;
 
-    @Before
-    public void init() {
+
+    private void initWithLexemes(List<Lexeme> lexemes) {
+        lines = new ColoredLinesList(EditorColors.forSyntax(SupportedSyntax.JAVA));
+        for (Lexeme l : lexemes) lines.add(l);
     }
 
     private void testAddingLexemes(List<Lexeme> lexemes) {
-        lines = new ColoredLinesList(EditorColors.forSyntax(SupportedSyntax.JAVA));
-        for (Lexeme l : lexemes) lines.add(l);
-        iterator = lines.lexemesIterator();
+        initWithLexemes(lexemes);
+        assertEquals(lexemes.toString(), lexemesAfterForwardTraversal().toString());
+
+        assertEquals(lexemes.toString(), lexemesAfterBackwardTraversal().toString());
+    }
+
+    private List<Lexeme> lexemesAfterForwardTraversal() {
+        LexemesIterator iterator = lines.lexemesIterator();
         List<Lexeme> result = new ArrayList<>();
+        while (iterator.hasPrevious()) iterator.previous();
         while (iterator.hasNext()) result.add(iterator.next());
-        assertEquals(lexemes.toString(), result.toString());
+        return result;
+    }
+
+    private List<Lexeme> lexemesAfterBackwardTraversal() {
+        LexemesIterator iterator = lines.lexemesIterator();
         List<Lexeme> backwardTraversal = new ArrayList<>();
+
         while (iterator.hasPrevious()) backwardTraversal.add(iterator.previous());
         Collections.reverse(backwardTraversal);
-        assertEquals(lexemes.toString(), backwardTraversal.toString());
+        return backwardTraversal;
+    }
+
+    private void testAddingLexemeInSpecificPlace(List<Lexeme> lexemes) {
+        for (Lexeme l : availableLexemes) {
+            IntStream.rangeClosed(0, lexemes.size()).forEach(i -> {
+                initWithLexemes(lexemes);
+                LexemesIterator iter = lines.lexemesIterator();
+                IntStream.rangeClosed(0, i-1).forEach(j -> iter.next());
+                iter.add(l);
+
+                List<Lexeme> expected = new ArrayList<>(lexemes);
+                expected.add(i, l);
+
+                List<Lexeme> actual = lexemesAfterForwardTraversal();
+                assertEquals(expected.toString(), actual.toString());
+            });
+        }
+    }
+
+    private void testRemovingLexemeBackwards(List<Lexeme> lexemes) {
+
+    }
+
+    private void testRemovingLexemeForward(List<Lexeme> lexemes) {
+
+    }
+
+    private List<List<Lexeme>> lexemePermutations(int n) {
+        ICombinatoricsVector<Lexeme> originalVector = Factory.createVector(availableLexemes);
+        Generator<Lexeme> gen = Factory.createPermutationWithRepetitionGenerator(originalVector, n);
+        ArrayList<List<Lexeme>> result = new ArrayList<>();
+        for (ICombinatoricsVector<Lexeme> perm : gen)
+            result.add(perm.getVector());
+        return result;
+    }
+
+    @Test
+    public void initializingWithLexemes() {
+        IntStream.rangeClosed(1, 3).forEach(i -> lexemePermutations(i).forEach(this::testAddingLexemes));
     }
 
     @Test
     public void addingLexemes() {
-        ICombinatoricsVector<Lexeme> originalVector = Factory.createVector(availableLexemes);
-        IntStream.range(1, 4).forEach(lexemesCount -> {
-            Generator<Lexeme> gen = Factory.createPermutationWithRepetitionGenerator(originalVector, lexemesCount);
-            for (ICombinatoricsVector<Lexeme> perm : gen)
-                testAddingLexemes(perm.getVector());
-        });
-
+        lexemePermutations(3).forEach(this::testAddingLexemeInSpecificPlace);
     }
 
-    public void addLexemeInTheBeginning() {
-
-    }
-
-    public void addLexemeInTheMiddle() {
-
-    }
-
-    public void addLexemeInTheEnd() {
-
-    }
-
+    @Test
     public void removePreviousLexeme() {
 
     }
 
+    @Test
     public void removeNextLexeme() {
 
     }
