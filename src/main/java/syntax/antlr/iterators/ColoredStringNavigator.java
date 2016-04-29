@@ -1,6 +1,8 @@
 package syntax.antlr.iterators;
 
 import gui.state.ColoredString;
+import org.apache.commons.collections4.list.TreeList;
+
 import java.awt.*;
 import java.util.List;
 import java.util.ListIterator;
@@ -15,7 +17,8 @@ public class ColoredStringNavigator {
     List<List<ColoredString>> coloredLines;
     LastIteratorAction lastLineIterAction;
 
-    public ColoredStringNavigator(List<List<ColoredString>> coloredLines) {
+    public ColoredStringNavigator(TreeList<List<ColoredString>> coloredLines) {
+        if (coloredLines.isEmpty()) coloredLines.add(new TreeList<>());
         this.linesIterator = coloredLines.listIterator();
         this.coloredLines = coloredLines;
         lastLineIterAction = LastIteratorAction.NOTHING;
@@ -31,7 +34,7 @@ public class ColoredStringNavigator {
             return currentLineIterator.next();
         else if (hasNext()) {
             nextLine();
-            return currentLineIterator.next(); //always at least one coloredstring on line
+            return currentLineIterator.next(); //always at least one colored string on line
         }
         else throw new RuntimeException("No next element!");
     }
@@ -45,31 +48,34 @@ public class ColoredStringNavigator {
             return currentLineIterator.previous();
         else if (hasPrevious()) {
             previousLine();
-            return currentLineIterator.previous(); //always at least one coloredstring on line
+            return currentLineIterator.previous(); //always at least one colored string on line
         }
         else throw new RuntimeException("No next element!");
     }
 
-    private void nextLine() {
+    void nextLine() {
         if (lastLineIterAction == LastIteratorAction.PREVIOUS) linesIterator.next();
         currentLineIterator = linesIterator.next().listIterator();
         lastLineIterAction = LastIteratorAction.NEXT;
     }
 
-    private void previousLine() {
+    void previousLine() {
         if (lastLineIterAction == LastIteratorAction.NEXT) linesIterator.previous();
         List<ColoredString> previousLine = linesIterator.previous();
         currentLineIterator = previousLine.listIterator(previousLine.size());
         lastLineIterAction = LastIteratorAction.PREVIOUS;
     }
 
-    public void beforePoint(Point p) {
+    public int beforePoint(Point p) {
         goToLine(p.y);
         int offset = 0;
         while (offset <= p.x && currentLineIterator.hasNext())
             offset += currentLineIterator.next().getSize();
-        if (currentLineIterator.hasPrevious())
-            currentLineIterator.previous();
+        if (currentLineIterator.hasPrevious()) {
+            ColoredString previousString = currentLineIterator.previous();
+            offset -= previousString.getSize();
+        }
+        return p.x - offset;
     }
 
     private void goToLine(int line) {

@@ -1,6 +1,7 @@
 package iterators;
 
 import gui.state.ColoredString;
+import org.apache.commons.collections4.list.TreeList;
 import org.junit.Before;
 import org.junit.Test;
 import syntax.EditorUtil;
@@ -17,10 +18,11 @@ import static syntax.EditorUtil.map;
  * Created by avyatkin on 28/04/16.
  */
 public class ColoredStringNavigatorTest {
-    List<List<ColoredString>> linesList = Arrays.asList(
-            coloredStrings("first", "line"),
-            coloredStrings("second", "line"),
-            coloredStrings("third", "line"));
+    TreeList<List<ColoredString>> linesList = new TreeList<>(
+            Arrays.asList(
+                coloredStrings("first", "line"),
+                coloredStrings("second", "line"),
+                coloredStrings("third", "line")));
 
     ColoredStringNavigator navigator;
 
@@ -83,9 +85,15 @@ public class ColoredStringNavigatorTest {
     }
 
     @Test
-    public void shouldNavigateCorrectlyInEmpty() {
-        navigator = new ColoredStringNavigator(Arrays.asList(coloredStrings("")));
+    public void shouldNavigateCorrectlyInSingleton() {
+        navigator = new ColoredStringNavigator(new TreeList<>(Arrays.asList(coloredStrings(""))));
         navigator.beforePoint(new Point(0,0));
         assertEquals(navigator.next().getContent(), "");
+    }
+
+    @Test
+    public void shouldNavigateCorrectlyInEmpty() {
+        navigator = new ColoredStringNavigator(new TreeList<>(Arrays.asList()));
+        assertEquals(navigator.hasNext(), false);
     }
 }
