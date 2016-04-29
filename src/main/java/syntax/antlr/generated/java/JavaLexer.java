@@ -1,4 +1,4 @@
-package syntax.antlr.java;
+package syntax.antlr.generated.java;
 // Generated from Java.g4 by ANTLR 4.5.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

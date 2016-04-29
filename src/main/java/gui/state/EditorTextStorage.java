@@ -58,7 +58,7 @@ public class EditorTextStorage {
             newLines = buildLinesList(text, false);
         newLines.forEach(iter::add);
 
-        index.addText(getText(beginningOfText(), position).length(), text);
+        index.addText(position, text);
     }
 
     public void removeText(Point position, int length) {
@@ -66,7 +66,7 @@ public class EditorTextStorage {
     }
 
     private void removeText(Point start, Point end) {
-        index.removeText(getText(beginningOfText(), start).length(), getText(start, end).length());
+        index.removeText(start, getText(start, end).length());
         String updated = lines.get(start.y).substring(0, start.x) + lines.get(end.y).substring(end.x);
         ListIterator<String> iter = lines.listIterator(start.y);
         for (int i = start.y; i <= end.y; i++) {

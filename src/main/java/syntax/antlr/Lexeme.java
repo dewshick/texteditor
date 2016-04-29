@@ -4,8 +4,6 @@ package syntax.antlr;
  * Created by avyatkin on 04/04/16.
  */
 public class Lexeme {
-    private int distanceToNextToken;
-    private int revision;
     private String type;
 
     public String getText() {
@@ -13,10 +11,9 @@ public class Lexeme {
     }
 
     private String text;
-    private int size;
 
     public int getSize() {
-        return size;
+        return text.length();
     }
 
     public String getType() {
@@ -24,14 +21,7 @@ public class Lexeme {
     }
 
 
-    public Lexeme(int offset, int distanceToNextToken, int size, String type, String text) {
-        this(distanceToNextToken, size, type, text);
-    }
-
-    public Lexeme(int distanceToNextToken, int size, String type, String text) {
-        this.distanceToNextToken = distanceToNextToken;
-        this.revision = 0;
-        this.size = size;
+    public Lexeme(String type, String text) {
         this.type = type;
         this.text = text;
     }
@@ -39,11 +29,8 @@ public class Lexeme {
     @Override
     public String toString() {
         return "{" +
-                ", distanceToNextToken=" + distanceToNextToken +
-                ", revision=" + revision +
-                ", type='" + type + '\'' +
+                "type='" + type + '\'' +
                 ", text='" + text + '\'' +
-                ", size=" + size +
                 '}';
     }
 
@@ -54,9 +41,6 @@ public class Lexeme {
 
         Lexeme lexeme = (Lexeme) o;
 
-        if (distanceToNextToken != lexeme.distanceToNextToken) return false;
-        if (revision != lexeme.revision) return false;
-        if (size != lexeme.size) return false;
         if (text != null ? !text.equals(lexeme.text) : lexeme.text != null) return false;
         if (type != null ? !type.equals(lexeme.type) : lexeme.type != null) return false;
 
@@ -65,11 +49,8 @@ public class Lexeme {
 
     @Override
     public int hashCode() {
-        int result = distanceToNextToken;
-        result = 31 * result + revision;
-        result = 31 * result + (type != null ? type.hashCode() : 0);
+        int result = (type != null ? type.hashCode() : 0);
         result = 31 * result + (text != null ? text.hashCode() : 0);
-        result = 31 * result + size;
         return result;
     }
 }

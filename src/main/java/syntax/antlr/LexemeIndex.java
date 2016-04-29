@@ -1,18 +1,18 @@
 package syntax.antlr;
 
 import com.sun.tools.javac.util.Pair;
+import gui.state.ColoredLinesList;
 import gui.state.ColoredString;
 import gui.view.EditorColors;
-import org.apache.commons.collections4.list.TreeList;
 import org.apache.commons.io.input.ReaderInputStream;
-import syntax.antlr.ecmascript.ECMAScriptLexer;
+import syntax.antlr.generated.ecmascript.ECMAScriptLexer;
 import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
-import syntax.antlr.java.JavaLexer;
+import syntax.antlr.iterators.ListIteratorWithOffset;
+import syntax.antlr.generated.java.JavaLexer;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColoring;
-
 import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
@@ -20,8 +20,7 @@ import java.io.SequenceInputStream;
 import java.io.StringReader;
 import java.util.*;
 import java.util.List;
-import java.util.function.Function;
-import java.util.stream.Collectors;
+import static syntax.EditorUtil.*;
 
 /**
  * Created by avyatkin on 01/04/16.
@@ -32,59 +31,40 @@ public class LexemeIndex {
     Lexer lexer;
     SupportedSyntax syntax;
 
-    public LexemeIndex(SupportedSyntax syntax, String code) {
-        this.syntax = syntax;
-        lexer = lexerByInputStream(new ANTLRInputStream(code));
-        lexemes = new LinkedList<>();
-        lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t).getLexeme()));
-        rebuildLexemesByLines();
+    public ColoredLinesList getColoredLinesList() {
+        return coloredLinesList;
     }
 
-    private List<Lexeme> lexemes;
+    ColoredLinesList coloredLinesList;
+    SyntaxColoring coloring;
 
-    public List<Lexeme> lexemes() { return lexemes; }
+    public LexemeIndex(SupportedSyntax syntax, String code) {
+        this.syntax = syntax;
+        coloring = EditorColors.forSyntax(syntax);
+        lexer = lexerByInputStream(new ANTLRInputStream(code));
 
-    List<List<ColoredString>> coloredLines;
+        coloredLinesList = new ColoredLinesList(coloring);
 
-    public void rebuildLexemesByLines() {
-        SyntaxColoring coloring = EditorColors.forSyntax(syntax);
-
-        List<List<ColoredString>> result = new TreeList<>();
-        List<ColoredString> initialLine = new TreeList<>();
-        for (Lexeme lexeme: lexemes) {
-            List<ColoredString> colored = coloring.colorizeLexeme(lexeme);
-                int index = 0;
-                for (ColoredString line : colored) {
-                    initialLine.add(line);
-                    if (index != colored.size() - 1) {
-                        result.add(initialLine);
-                        initialLine = new TreeList<>();
-                    }
-                    index++;
-                }
-        }
-        result.add(initialLine);
-        coloredLines = result;
+        lexer.getAllTokens().forEach(t -> coloredLinesList.add(lexemeFromToken(t).getLexeme()));
     }
 
     public List<ColoredString> getColoredLine(int line) {
-        return coloredLines.get(line);
+        return coloredLinesList.getColoredLine(line);
     }
 
     private LexemeWithOffset lexemeFromToken(Token current) {
         int offset = current.getStartIndex();
         int distanceToNextToken = current.getText().length();
         String tokenType = getTokenType(current);
-        return new LexemeWithOffset(new Lexeme(offset, distanceToNextToken, distanceToNextToken, tokenType, current.getText()),offset);
+        return new LexemeWithOffset(new Lexeme(tokenType, current.getText()),offset);
     }
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
 // TODO: accept Point coords instead of offset
-    public List<Lexeme> addText(int offset, String newText) {
-        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+    public List<Lexeme> addText(Point changesPoint, String newText) {
+        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = coloredLinesList.beforeFirstAffectedLexeme(changesPoint);
         ListIteratorWithOffset oldLexemeIterator = iteratorWithOffset.snd;
         int relativeLexemeOffset = iteratorWithOffset.fst;
-        offset = -1;
 
         String extendedText = newText;
         int updatedLexemeOffset = 0;
@@ -99,16 +79,14 @@ public class LexemeIndex {
                 oldLexemeIterator,
                 updatedLexemeOffset,
                 newText.length()).syncLexemes();
-        rebuildLexemesByLines();
-        return result.stream().map(LexemeWithOffset::getLexeme).collect(Collectors.toList());
+        return map(result, LexemeWithOffset::getLexeme);
     }
 
 // TODO: accept Point coords instead of offset
-    public List<Lexeme> removeText(int offset, int length) {
-        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = beforeFirstAffectedLexeme(offset);
+    public List<Lexeme> removeText(Point changesPoint, int length) {
+        Pair<Integer, ListIteratorWithOffset> iteratorWithOffset = coloredLinesList.beforeFirstAffectedLexeme(changesPoint);
         ListIteratorWithOffset oldLexemeIterator = iteratorWithOffset.snd;
         int relativeLexemeOffset = iteratorWithOffset.fst;
-        offset = -1;
 
         if (oldLexemeIterator.hasNext()) {
             StringBuilder modifiedTextBuilder = new StringBuilder();
@@ -125,25 +103,13 @@ public class LexemeIndex {
             String modifiedText = modifiedTextBuilder.toString();
             modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
             List<LexemeWithOffset> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
-            rebuildLexemesByLines();
-            return result.stream().map(LexemeWithOffset::getLexeme).collect(Collectors.toList());
+            return map(result, LexemeWithOffset::getLexeme);
         } else {
             return new LinkedList<>();
         }
     }
 
 // TODO: accept Point coords instead of offset
-    private Pair<Integer, ListIteratorWithOffset> beforeFirstAffectedLexeme(int offset) {
-        ListIteratorWithOffset iterator = new ListIteratorWithOffset(lexemes);
-        if (lexemes.isEmpty()) return new Pair<>(0, iterator);
-        LexemeWithOffset currentLexeme = iterator.next();
-        while (iterator.hasNext() && currentLexeme.getLexeme().getSize() + currentLexeme.getOffset() < offset) {
-            currentLexeme = iterator.next();
-        }
-        iterator.previous();
-        int offsetInsideLexeme = offset - currentLexeme.getOffset();
-        return new Pair<>(offsetInsideLexeme, iterator);
-    }
 
     private InputStream stringInputStream(String input) {
         return new ReaderInputStream(new StringReader(input));
@@ -161,7 +127,7 @@ public class LexemeIndex {
 
     class IncrementalRetokenizer {
         IncrementalRetokenizer(String extendedText, ListIteratorWithOffset oldLexemesIter, int newOffset, int oldOffset) {
-            updateLexer = updatedCodeLexer(extendedText, lexemes.listIterator(oldLexemesIter.nextIndex()));
+            updateLexer = updatedCodeLexer(extendedText, oldLexemesIter.getListIterator().copy());
             oldLexemesIterator = oldLexemesIter;
             newLexemeOffset = newOffset;
             oldLexemeOffset = oldOffset;

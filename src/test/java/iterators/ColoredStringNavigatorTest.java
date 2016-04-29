@@ -53,11 +53,14 @@ public class ColoredStringNavigatorTest {
 
     @Test
     public void shouldWorkAfterMultipleTraversals() {
-        List<String> resultList = new ArrayList<>();
         while (navigator.hasNext()) navigator.next();
         while (navigator.hasPrevious()) navigator.previous();
+        List<String> resultList = new ArrayList<>();
         while (navigator.hasNext()) resultList.add(navigator.next().getContent());
         assertEquals("[first, line, second, line, third, line]", resultList.toString());
+        resultList = new ArrayList<>();
+        while (navigator.hasPrevious()) resultList.add(navigator.previous().getContent());
+        assertEquals("[line, third, line, second, line, first]", resultList.toString());
     }
 
     @Test

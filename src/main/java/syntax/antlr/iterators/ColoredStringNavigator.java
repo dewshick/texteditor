@@ -26,7 +26,13 @@ public class ColoredStringNavigator {
     }
 
     public boolean hasNext() {
-        return currentLineIterator.hasNext() || linesIterator.hasNext();
+        boolean result = currentLineIterator.hasNext() || linesIterator.hasNext();
+        if (lastLineIterAction == LastIteratorAction.PREVIOUS) {
+            linesIterator.next();
+            result = currentLineIterator.hasNext() || linesIterator.hasNext();
+            linesIterator.previous();
+        }
+        return result;
     }
 
     public ColoredString next() {
@@ -40,7 +46,13 @@ public class ColoredStringNavigator {
     }
 
     public boolean hasPrevious() {
-        return currentLineIterator.hasPrevious() || linesIterator.hasPrevious();
+        boolean result = currentLineIterator.hasPrevious() || linesIterator.hasPrevious();
+        if (lastLineIterAction == LastIteratorAction.NEXT) {
+            linesIterator.previous();
+            result = currentLineIterator.hasPrevious() || linesIterator.hasPrevious();
+            linesIterator.next();
+        }
+        return result;
     }
 
     public ColoredString previous() {

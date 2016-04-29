@@ -1,4 +1,4 @@
-package syntax.antlr.ecmascript;
+package syntax.antlr.generated.ecmascript;
 // Generated from ECMAScript.g4 by ANTLR 4.5.2
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.CharStream;

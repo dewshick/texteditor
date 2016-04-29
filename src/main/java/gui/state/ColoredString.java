@@ -16,8 +16,10 @@ public class ColoredString {
     String content;
     Color color;
     int indexInLexeme;
+    String type;
 
-    private ColoredString(String content, Color color, int indexInLexeme) {
+    public ColoredString(String content, Color color, int indexInLexeme, String type) {
+        this.type = type;
         this.content = content;
         this.color = color;
         this.indexInLexeme = indexInLexeme;
@@ -31,14 +33,13 @@ public class ColoredString {
         return content;
     }
 
-    public static List<ColoredString> splitLexeme(Lexeme lexeme, SyntaxColoring coloring) {
-        int lexemePartIndex = 0;
-        List<ColoredString> result = new TreeList<>();
-        Color lexemeColor = coloring.getColor(lexeme);
-        for (String lexemePart : EditorTextStorage.buildLinesList(lexeme.getText(), true)) {
-            result.add(new ColoredString(lexemePart, lexemeColor, lexemePartIndex));
-            lexemePartIndex++;
-        }
-        return result;
+    public int getSize() { return content.length(); }
+
+    public int getIndexInLexeme() {
+        return indexInLexeme;
+    }
+
+    public String getType() {
+        return type;
     }
 }

@@ -1,5 +1,9 @@
-package syntax.antlr;
+package syntax.antlr.iterators;
 
+import syntax.antlr.Lexeme;
+import syntax.antlr.LexemeWithOffset;
+
+import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
 import java.util.Optional;
@@ -7,24 +11,37 @@ import java.util.Optional;
 /**
  * Created by avyatkin on 27/04/16.
  */
-class ListIteratorWithOffset implements ListIterator<LexemeWithOffset> {
-    enum LastAction { NOTHING, NEXT, PREVIOUS }
-
-    LastAction lastAction;
+public class ListIteratorWithOffset implements ListIterator<LexemeWithOffset>, Iterator<LexemeWithOffset> {
+    LastIteratorAction lastAction;
     Optional<LexemeWithOffset> lastReturned;
 
-    public ListIteratorWithOffset(List<Lexeme> lexemes) {
-        listIterator = lexemes.listIterator();
-        lastAction = LastAction.NOTHING;
+    public ListIteratorWithOffset(LexemesIterator literator) {
+        listIterator = literator;
+        lastAction = LastIteratorAction.NOTHING;
         offset = 0;
         lastReturned = Optional.empty();
     }
 
-    public ListIterator<Lexeme> getListIterator() {
+    public ListIteratorWithOffset copy() {
+//        new ListIteratorWithOffset()
+        throw new RuntimeException("not implemented, but should be");
+    }
+
+    public LexemesIterator getListIterator() {
         return listIterator;
     }
 
-    ListIterator<Lexeme> listIterator;
+    public void getBeforeAffectedLexeme(int offset) {
+        while (hasNext() &&
+                (!lastReturned.isPresent() ||
+                        lastReturned.get().getOffset() + lastReturned.get().getLexeme().getSize() < offset))
+            next();
+
+        while (hasPrevious() && (!lastReturned.isPresent() || lastReturned.get().getOffset() > offset))
+            previous();
+    }
+
+    LexemesIterator listIterator;
     int offset;
 
     @Override
@@ -35,7 +52,7 @@ class ListIteratorWithOffset implements ListIterator<LexemeWithOffset> {
     @Override
     public LexemeWithOffset next() {
         if (listIterator.hasNext()) {
-            lastAction = LastAction.NEXT;
+            lastAction = LastIteratorAction.NEXT;
             Lexeme next = listIterator.next();
             LexemeWithOffset result = new LexemeWithOffset(next, offset);
             offset += next.getSize();
@@ -54,7 +71,7 @@ class ListIteratorWithOffset implements ListIterator<LexemeWithOffset> {
     @Override
     public LexemeWithOffset previous() {
         if (listIterator.hasPrevious()) {
-            lastAction = LastAction.PREVIOUS;
+            lastAction = LastIteratorAction.PREVIOUS;
             Lexeme previous = listIterator.previous();
             offset -= previous.getSize();
             LexemeWithOffset result = new LexemeWithOffset(previous, offset);
@@ -77,9 +94,9 @@ class ListIteratorWithOffset implements ListIterator<LexemeWithOffset> {
     @Override
     public void remove() {
         listIterator.remove();
-        if (lastAction.equals(lastAction.NEXT))
+        if (lastAction.equals(LastIteratorAction.NEXT))
             offset -= lastReturned.get().getLexeme().getSize();
-        lastAction = LastAction.NOTHING;
+        lastAction = LastIteratorAction.NOTHING;
     }
 
     @Override

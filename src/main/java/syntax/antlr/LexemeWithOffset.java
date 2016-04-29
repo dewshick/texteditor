@@ -3,7 +3,7 @@ package syntax.antlr;
 /**
  * Created by avyatkin on 27/04/16.
  */
-class LexemeWithOffset {
+public class LexemeWithOffset {
     public Lexeme getLexeme() {
         return lexeme;
     }
