@@ -3,6 +3,8 @@ package gui.view;
 import gui.state.ColoredString;
 import gui.state.EditorState;
 import gui.state.EditorTextStorage;
+import syntax.brackets.BracketHighlighting;
+
 import java.awt.*;
 import java.util.*;
 import java.util.List;
@@ -95,30 +97,40 @@ public class EditorRenderer {
         static final int CARET_WIDTH = 2;
 
         public Rectangle caretRect() {
-            Point coords = utils.absoluteCoords(caret.getRelativePosition());
-            int width = caret.isInInsertMode() ? utils.fontWidth() : CARET_WIDTH;
-            return new Rectangle(coords.x, coords.y, width, utils.fontHeight());
+            Rectangle result = utils.absoluteTile(caret.getRelativePosition());
+            if (!caret.isInInsertMode()) result.width = CARET_WIDTH;
+            return result;
         }
 
-//            TODO: protected
         public void renderCaret(Graphics g) {
-//            TODO: SPECIFIC STATE MACHINE FOR COLORS/DEFAULT COLOR/WHATEVER TO MAINTAIN CORRECT STATE
-//            TODO: SEPARATE RENDERING AND HANDLING RELATIVE/ABSOLUTE COORDS FROM VIEW LOGIC
 //            TODO: RENDER ONLY DIFF
-            if (!caret.shouldBeRendered()) return;
-            Color caretColor = caret.isInInsertMode() ? EditorColors.INSERT_CARET : EditorColors.CARET;
-            fillRectWithColor(g, caretRect(), caretColor);
-            Point relativePosition = caret.getRelativePosition();
-            EditorTextStorage textStorage = state.getTextStorage();
+            renderBracketHighlighting(g);
 
             if (caret.isInInsertMode()) {
-                String relevantLine = textStorage.getLines().get(relativePosition.y);
-                if (relevantLine.length() <= relativePosition.x) return;
-                Point textEnd = new Point(relativePosition.x + 1, relativePosition.y);
-                String text = textStorage.getText(relativePosition, textEnd);
-                drawStringWithColor(g, text, relativePosition, EditorColors.TEXT_OVER_INSERT_CARET);
+                renderCharOnBackground(g, caret.getRelativePosition(), EditorColors.TEXT_OVER_INSERT_CARET, EditorColors.INSERT_CARET);
+            } else {
+                if (!caret.shouldBeRendered()) return;
+                fillRectWithColor(g, caretRect(), EditorColors.CARET);
             }
+
         }
+
+        private void renderBracketHighlighting(Graphics g) {
+            BracketHighlighting highlighting = state.getTextStorage().getBracketHighlighting(caret.getRelativePosition());
+            highlighting.getBrokenBraces().forEach(coords ->
+                    renderCharOnBackground(g, coords, EditorColors.TEXT_OVER_BROKEN_BRACKET, EditorColors.BRACKET_BACKGROUND));
+            highlighting.getWorkingBraces().forEach(coords ->
+                    renderCharOnBackground(g, coords, EditorColors.TEXT_OVER_WORKING_BRACKET, EditorColors.BRACKET_BACKGROUND));
+        }
+    }
+
+    private void renderCharOnBackground(Graphics g, Point relativeCharCoords, Color color, Color background) {
+        fillRectWithColor(g, utils.absoluteTile(relativeCharCoords), background);
+        String relevantLine = state.getTextStorage().getLines().get(relativeCharCoords.y);
+        if (relevantLine.length() <= relativeCharCoords.x) return;
+        Point textEnd = new Point(relativeCharCoords.x + 1, relativeCharCoords.y);
+        String text = state.getTextStorage().getText(relativeCharCoords, textEnd);
+        drawStringWithColor(g, text, relativeCharCoords, color);
     }
 
     private void fillRectWithColor(Graphics g, Rectangle rect, Color clr) {

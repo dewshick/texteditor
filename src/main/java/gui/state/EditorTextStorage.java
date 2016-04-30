@@ -3,6 +3,7 @@ package gui.state;
 import gui.view.EditorColors;
 import org.apache.commons.collections4.list.TreeList;
 import syntax.antlr.LexemeIndex;
+import syntax.brackets.BracketHighlighting;
 import syntax.document.SupportedSyntax;
 import java.awt.*;
 import java.util.ArrayList;
@@ -20,7 +21,6 @@ public class EditorTextStorage {
     LexemeIndex index;
     SupportedSyntax syntax;
 
-
     public EditorTextStorage(SupportedSyntax syntax) {
         lines = new TreeList<>();
         lines.add("");
@@ -33,6 +33,10 @@ public class EditorTextStorage {
     public void setText(String text) {
         this.lines = buildLinesList(text);
         index = new LexemeIndex(syntax, text);
+    }
+
+    public BracketHighlighting getBracketHighlighting(Point caret) {
+        return index.getHighlighting(caret);
     }
 
 //    TODO: use 2d int rectangle to return displayed area

@@ -22,6 +22,10 @@ public class EditorColors {
     public static final Color TEXT_OVER_INSERT_CARET = Color.GREEN;
     public static final Color SELECTION = Color.GREEN;
 
+    public static final Color TEXT_OVER_BROKEN_BRACKET = Color.RED;
+    public static final Color TEXT_OVER_WORKING_BRACKET = Color.YELLOW;
+    public static final Color BRACKET_BACKGROUND = Color.CYAN;
+
     public static final Color TEXT = Color.BLACK;
     public static final Color KEYWORD = Color.BLUE;
     public static final Color IDENTIFIER = Color.ORANGE;

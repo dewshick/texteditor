@@ -47,6 +47,11 @@ public class TextCoordUtils {
                 point.y * fontHeight() + (fontHeight() - fontMetrics().getAscent()));
     }
 
+    public Rectangle absoluteTile(Point relativeCoords) {
+        Point coords = absoluteCoords(relativeCoords);
+        return new Rectangle(coords.x, coords.y, fontWidth(), fontHeight());
+    }
+
     public Rectangle absoluteRectangle(Rectangle rect) {
         Point absoluteCoords = absoluteCoords(new Point(rect.x, rect.y));
         return new Rectangle(absoluteCoords.x, absoluteCoords.y, rect.width * fontWidth(), rect.height * fontHeight());
