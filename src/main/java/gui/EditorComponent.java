@@ -33,10 +33,7 @@ public class EditorComponent extends JComponent implements Scrollable {
         state = new EditorState(syntax);
         coordUtils = new TextCoordUtils(this);
         renderer = new EditorRenderer(state, coordUtils);
-
         editable = true;
-
-        grabFocus();
         setDoubleBuffered(true);
         addFocusRelatedListeners();
         addCaretRelatedActions();
@@ -102,7 +99,10 @@ public class EditorComponent extends JComponent implements Scrollable {
     private void addFocusRelatedListeners() {
         addMouseListener(new MouseAdapter() {
             @Override
-            public void mousePressed(MouseEvent e) { requestFocusInWindow(); }
+            public void mousePressed(MouseEvent e) {
+                if (!state.isAvailable()) return;
+                requestFocusInWindow();
+            }
         });
     }
 
