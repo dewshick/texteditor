@@ -44,7 +44,7 @@ public class TextCoordUtils {
 
     public Point absoluteCoords(Point point) {
         return new Point(point.x * fontWidth(),
-                point.y * fontHeight() + (fontHeight() - fontMetrics().getAscent()));
+                point.y * fontHeight());// + (fontHeight() - fontMetrics().getAscent()));
     }
 
     public Rectangle absoluteTile(Point relativeCoords) {
@@ -71,7 +71,7 @@ public class TextCoordUtils {
 
     public Point absoluteTextCoords(Point relativePosition) {
         return new Point(relativePosition.x * fontWidth(),
-                (relativePosition.y+1) * fontHeight());
+                (relativePosition.y+1) * fontHeight() -  (fontHeight() - fontMetrics().getAscent()));
     }
 
     public Dimension absoluteDimension(Dimension relativeSize) {
