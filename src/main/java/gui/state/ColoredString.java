@@ -11,10 +11,16 @@ import java.util.stream.Collectors;
 public class ColoredString {
     String content;
     Color color;
+    String type;
 
-    public ColoredString(String content, Color color) {
+    public String getType() {
+        return type;
+    }
+
+    public ColoredString(String content, Color color, String type) {
         this.content = content;
         this.color = color;
+        this.type = type;
     }
 
     public Color getColor() {
@@ -31,6 +37,6 @@ public class ColoredString {
 
     public List<ColoredString> splitByLines() {
         return EditorTextStorage.buildLinesList(content).stream().
-                map(str -> new ColoredString(str, color)).collect(Collectors.toList());
+                map(str -> new ColoredString(str, color, type)).collect(Collectors.toList());
     }
 }

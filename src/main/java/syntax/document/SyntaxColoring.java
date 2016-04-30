@@ -28,7 +28,7 @@ public class SyntaxColoring {
     }
 
     public ColoredString colorizeLexeme(Lexeme lexeme) {
-        return new ColoredString(lexeme.getText(), getColor(lexeme));
+        return new ColoredString(lexeme.getText(), getColor(lexeme), lexeme.getType());
     }
 
     Color getColor(Lexeme lexeme) {
