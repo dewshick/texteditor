@@ -26,7 +26,11 @@ public class EditorState {
     Optional<Thread> loadingTask;
 
     public void setText(String text) {
-        Thread initialJob = new Thread(() -> textStorage.setText(text));
+        Thread initialJob = new Thread(() -> {
+            textStorage.setText(text);
+            caret = new Caret();
+            selection = new Selection();
+        });
         loadingTask = Optional.of(initialJob);
         initialJob.start();
     }
