@@ -1,5 +1,10 @@
 package syntax.document;
 
+import com.sun.tools.javac.util.Pair;
+
+import java.util.Arrays;
+import java.util.List;
+
 /**
  * Created by avyatkin on 02/04/16.
  */
@@ -22,6 +27,10 @@ public enum SupportedSyntax {
                 new String[]{ "LINE_COMMENT", "COMMENT", "BROKEN_COMMENT" },
                 new String[]{ "MultiLineComment", "SingleLineComment", "BrokenMultiLineComment" }
         );
+    }
+
+    public List<Pair<String, String>> bracketPairs() {
+        return Arrays.asList(new Pair<>("'('", "')'" ), new Pair<>( "'['", "']'" ), new Pair<>( "'{'", "'}'"));
     }
 
     private <T> T oneOf(T forJava, T forJs) {
