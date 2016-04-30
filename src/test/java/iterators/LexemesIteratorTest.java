@@ -2,7 +2,6 @@ package iterators;
 
 import gui.state.ColoredLinesList;
 import gui.view.EditorColors;
-import org.junit.Before;
 import org.junit.Test;
 import org.paukov.combinatorics.Factory;
 import org.paukov.combinatorics.Generator;
@@ -10,9 +9,7 @@ import org.paukov.combinatorics.ICombinatoricsVector;
 import syntax.antlr.Lexeme;
 import syntax.antlr.iterators.LexemesIterator;
 import syntax.document.SupportedSyntax;
-import syntax.document.SyntaxColoring;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -38,11 +35,12 @@ public class LexemesIteratorTest {
         for (Lexeme l : lexemes) lines.add(l);
     }
 
-    private void testAddingLexemes(List<Lexeme> lexemes) {
+    private void testInitializingWithLexemes(List<Lexeme> lexemes) {
         initWithLexemes(lexemes);
         assertEquals(lexemes.toString(), lexemesAfterForwardTraversal().toString());
 
-        assertEquals(lexemes.toString(), lexemesAfterBackwardTraversal().toString());
+        assertEquals(lexemes.toString(), lexemesAfterBackwardTraversal(0).toString());
+        assertEquals(lexemes.toString(), lexemesAfterBackwardTraversal(1).toString());
     }
 
     private List<Lexeme> lexemesAfterForwardTraversal() {
@@ -53,10 +51,15 @@ public class LexemesIteratorTest {
         return result;
     }
 
-    private List<Lexeme> lexemesAfterBackwardTraversal() {
+    private List<Lexeme> lexemesAfterBackwardTraversal(int traversals) {
         LexemesIterator iterator = lines.lexemesIterator();
         List<Lexeme> backwardTraversal = new ArrayList<>();
+        while (iterator.hasNext()) iterator.next();
 
+        IntStream.range(1, traversals).forEach(i -> {
+            while (iterator.hasPrevious()) iterator.previous();
+            while (iterator.hasNext()) iterator.next();
+        });
         while (iterator.hasPrevious()) backwardTraversal.add(iterator.previous());
         Collections.reverse(backwardTraversal);
         return backwardTraversal;
@@ -64,14 +67,14 @@ public class LexemesIteratorTest {
 
     private void testAddingLexemeInSpecificPlace(List<Lexeme> lexemes) {
         for (Lexeme l : availableLexemes) {
-            IntStream.rangeClosed(0, lexemes.size()).forEach(i -> {
+            IntStream.rangeClosed(0, lexemes.size()).forEach(lexemePlace -> {
                 initWithLexemes(lexemes);
                 LexemesIterator iter = lines.lexemesIterator();
-                IntStream.rangeClosed(0, i-1).forEach(j -> iter.next());
+                IntStream.rangeClosed(0, lexemePlace-1).forEach(j -> iter.next());
                 iter.add(l);
 
                 List<Lexeme> expected = new ArrayList<>(lexemes);
-                expected.add(i, l);
+                expected.add(lexemePlace, l);
 
                 List<Lexeme> actual = lexemesAfterForwardTraversal();
                 assertEquals(expected.toString(), actual.toString());
@@ -84,7 +87,10 @@ public class LexemesIteratorTest {
     }
 
     private void testRemovingLexemeForward(List<Lexeme> lexemes) {
-
+        IntStream.rangeClosed(1, lexemes.size()).forEach(indexToRm -> {
+            LexemesIterator iter = lines.lexemesIterator();
+            IntStream.rangeClosed(1, indexToRm).forEach(j -> iter.next());
+        });
     }
 
     private List<List<Lexeme>> lexemePermutations(int n) {
@@ -97,8 +103,8 @@ public class LexemesIteratorTest {
     }
 
     @Test
-    public void initializingWithLexemes() {
-        IntStream.rangeClosed(1, 3).forEach(i -> lexemePermutations(i).forEach(this::testAddingLexemes));
+    public void initializing() {
+        IntStream.rangeClosed(1, 3).forEach(i -> lexemePermutations(i).forEach(this::testInitializingWithLexemes));
     }
 
     @Test
