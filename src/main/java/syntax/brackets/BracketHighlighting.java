@@ -1,5 +1,6 @@
 package syntax.brackets;
 
+import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -12,7 +13,7 @@ public class BracketHighlighting {
         return "{" + "workingBraces=" + workingBraces + ", brokenBraces=" + brokenBraces + '}';
     }
 
-    public BracketHighlighting(List<Integer> workingBraces, List<Integer> brokenBraces) {
+    public BracketHighlighting(List<Point> workingBraces, List<Point> brokenBraces) {
         if (workingBraces == null)
             workingBraces = new ArrayList<>(0);
         if (brokenBraces == null)
@@ -22,8 +23,8 @@ public class BracketHighlighting {
         this.brokenBraces = brokenBraces;
     }
 
-    public List<Integer> getWorkingBraces() { return workingBraces; }
-    public List<Integer> getBrokenBraces() { return brokenBraces; }
-    List<Integer> workingBraces;
-    List<Integer> brokenBraces;
+    public List<Point> getWorkingBraces() { return workingBraces; }
+    public List<Point> getBrokenBraces() { return brokenBraces; }
+    List<Point> workingBraces;
+    List<Point> brokenBraces;
 }

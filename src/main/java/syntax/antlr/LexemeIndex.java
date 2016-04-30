@@ -9,14 +9,18 @@ import org.antlr.v4.runtime.ANTLRInputStream;
 import org.antlr.v4.runtime.Lexer;
 import org.antlr.v4.runtime.Token;
 import syntax.antlr.java.JavaLexer;
+import syntax.brackets.BracketHighlighting;
+import syntax.brackets.BracketIndex;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColoring;
 
+import java.awt.*;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.SequenceInputStream;
 import java.io.StringReader;
 import java.util.*;
+import java.util.List;
 import java.util.function.Function;
 
 /**
@@ -27,6 +31,7 @@ public class LexemeIndex {
 
     Lexer lexer;
     SupportedSyntax syntax;
+    BracketIndex bracketIndex;
 
     public LexemeIndex(SupportedSyntax syntax, String code) {
         this.syntax = syntax;
@@ -64,6 +69,15 @@ public class LexemeIndex {
         }
         result.add(initialLine);
         coloredLines = result;
+        rebuildBracketIndex();
+    }
+
+    public void rebuildBracketIndex() {
+        bracketIndex = new BracketIndex(syntax, this);
+    }
+
+    public BracketHighlighting getHighlighting(Point caret) {
+        return bracketIndex.getHighlighting(caret);
     }
 
     public List<ColoredString> getColoredLine(int line) {
@@ -142,6 +156,10 @@ public class LexemeIndex {
                 return new JavaLexer(inputStream);
         }
         throw new RuntimeException("Unknown syntax type: " + syntax); //impossible
+    }
+
+    public List<List<ColoredString>> getColoredLines() {
+        return coloredLines;
     }
 
     class IncrementalRetokenizer {
