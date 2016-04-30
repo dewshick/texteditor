@@ -9,6 +9,7 @@ import syntax.document.SyntaxColoring;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.IntStream;
 
 import static syntax.EditorUtil.*;
 
@@ -108,18 +109,84 @@ public class LexemesIterator implements ListIterator<Lexeme> {
         throw new RuntimeException("Not implemented!");
     }
 
+//    TODO: refactor
+//    why java's iterators are so unusable? maybe should write my own one?
     @Override
     public void remove() {
         if (lastAction == LastIteratorAction.PREVIOUS) {
-            Point start = new Point(navigator.linesIterator.nextIndex(), navigator.currentLineIterator.nextIndex());
-            ColoredString currentLexeme = navigator.next();
-            while (navigator.hasNext() &&
-                    navigator.peekNext().getIndexInLexeme() == currentLexeme.getIndexInLexeme() + 1)
-                currentLexeme = navigator.next();
-            Point end = new Point(navigator.linesIterator.nextIndex(), navigator.currentLineIterator.nextIndex());
+            ListIterator<List<ColoredString>> iter =  navigator.linesIterator;
+            ListIterator<ColoredString> current = navigator.currentLineIterator;
+            List<ColoredString> firstLine;
+            List<ColoredString> lastLine = new ArrayList<>();
 
+            if (navigator.lastLineIterAction == LastIteratorAction.NEXT) {
+                firstLine = iter.previous();
+                iter.remove();
+            } else {
+                firstLine = iter.next();
+                iter.remove();
+            }
+
+
+            ColoredString removedString = current.next();
+            current.remove();
+            while (current.hasNext() || iter.hasNext()) {
+                if(!current.hasNext()) {
+//                    nextLine in navigator
+                    lastLine = iter.next();
+                    current = lastLine.listIterator();
+                    iter.remove();
+                }
+
+                ColoredString nextString = current.next();
+                if (nextString.getIndexInLexeme() == removedString.getIndexInLexeme() + 1) {
+                    current.remove();
+                    removedString = nextString;
+                } else {
+                    current.previous();
+                    break;
+                }
+            }
+            firstLine.addAll(lastLine);
+            iter.add(firstLine);
         } else if (lastAction == LastIteratorAction.NEXT) {
-            navigator.currentLineIterator.next();
+            ListIterator<List<ColoredString>> iter =  navigator.linesIterator;
+            ListIterator<ColoredString> current = navigator.currentLineIterator;
+            List<ColoredString> firstLine;
+            List<ColoredString> lastLine = new ArrayList<>();
+
+            if (navigator.lastLineIterAction == LastIteratorAction.NEXT) {
+                firstLine = iter.previous();
+                iter.remove();
+            } else {
+                firstLine = iter.next();
+                iter.remove();
+            }
+
+
+            ColoredString removedString = current.previous();
+            current.remove();
+            while (current.hasPrevious() || iter.hasPrevious()) {
+
+                if(!current.hasPrevious()) {
+//                    previousLine in navigator
+                    lastLine = iter.previous();
+                    current = lastLine.listIterator();
+                    while (current.hasNext()) current.next();
+                    iter.remove();
+                }
+
+                ColoredString nextString = current.previous();
+                if (nextString.getIndexInLexeme() == removedString.getIndexInLexeme() - 1) {
+                    current.remove();
+                    removedString = nextString;
+                } else {
+                    current.next();
+                    break;
+                }
+            }
+            lastLine.addAll(firstLine);
+            iter.add(lastLine);
         } else throw new RuntimeException("Cannot remove element, because removal direction is unknown.");
 
         lastAction = LastIteratorAction.NOTHING;

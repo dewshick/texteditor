@@ -10,10 +10,7 @@ import syntax.antlr.Lexeme;
 import syntax.antlr.iterators.LexemesIterator;
 import syntax.document.SupportedSyntax;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 import java.util.stream.IntStream;
 
 import static org.junit.Assert.assertEquals;
@@ -83,13 +80,34 @@ public class LexemesIteratorTest {
     }
 
     private void testRemovingLexemeBackwards(List<Lexeme> lexemes) {
+        IntStream.rangeClosed(1, lexemes.size()).forEach(indexToRm -> {
+            List<Lexeme> expectedList = new ArrayList<>(lexemes);
+            initWithLexemes(expectedList);
+            LexemesIterator actualIter = lines.lexemesIterator();
+            ListIterator<Lexeme> expectedIter = expectedList.listIterator();
+            while (actualIter.hasNext()) { actualIter.next(); expectedIter.next(); }
 
+            IntStream.rangeClosed(1, indexToRm).forEach(j -> {
+                expectedIter.previous();
+                actualIter.previous();
+            });
+            actualIter.remove(); expectedIter.remove();
+
+            assertEquals(expectedList, lexemesAfterForwardTraversal());
+        });
     }
 
     private void testRemovingLexemeForward(List<Lexeme> lexemes) {
         IntStream.rangeClosed(1, lexemes.size()).forEach(indexToRm -> {
-            LexemesIterator iter = lines.lexemesIterator();
-            IntStream.rangeClosed(1, indexToRm).forEach(j -> iter.next());
+            List<Lexeme> expectedList = new ArrayList<>(lexemes);
+            initWithLexemes(expectedList);
+            LexemesIterator actualIter = lines.lexemesIterator();
+            ListIterator<Lexeme> expectdIter = expectedList.listIterator();
+            IntStream.rangeClosed(1, indexToRm).forEach(j -> { actualIter.next(); expectdIter.next();});
+            expectdIter.remove();
+            actualIter.remove();
+
+            assertEquals(expectedList, lexemesAfterForwardTraversal());
         });
     }
 
@@ -107,6 +125,8 @@ public class LexemesIteratorTest {
         IntStream.rangeClosed(1, 3).forEach(i -> lexemePermutations(i).forEach(this::testInitializingWithLexemes));
     }
 
+//    actually we should compare internal structures of lineslists instead of comparing them with lexeme lists
+//    TODO after fixing all this tests
     @Test
     public void addingLexemes() {
         lexemePermutations(3).forEach(this::testAddingLexemeInSpecificPlace);
@@ -114,11 +134,11 @@ public class LexemesIteratorTest {
 
     @Test
     public void removePreviousLexeme() {
-
+        lexemePermutations(3).forEach(this::testRemovingLexemeBackwards);
     }
 
     @Test
     public void removeNextLexeme() {
-
+        lexemePermutations(3).forEach(this::testRemovingLexemeForward);
     }
 }
