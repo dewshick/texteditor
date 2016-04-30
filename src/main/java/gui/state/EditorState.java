@@ -39,6 +39,10 @@ public class EditorState {
         return selection;
     }
 
+    public void changeSyntax(SupportedSyntax syntax) {
+        textStorage.changeSyntax(syntax);
+    }
+
     public void paste(String text) {
         selection.removeTextUnderSelection();
         textStorage.addText(caret.relativePosition, text);

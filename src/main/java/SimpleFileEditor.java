@@ -12,9 +12,7 @@ public class SimpleFileEditor extends JPanel {
     EditorComponent editableArea;
 
     private static final EditorComponent initEditableArea() {
-        final Insets TEXT_AREA_MARGIN = new Insets(5,5,5,5);
         EditorComponent editableArea = new EditorComponent(SupportedSyntax.ECMASCRIPT);
-//        editableArea.setMargin(TEXT_AREA_MARGIN);
         return editableArea;
     }
 
@@ -30,6 +28,7 @@ public class SimpleFileEditor extends JPanel {
             int returnVal = fileChooser.showOpenDialog(fileEditor);
             if (returnVal == JFileChooser.APPROVE_OPTION) {
                 File file = fileChooser.getSelectedFile();
+                fileEditor.setAppropriateSyntax(file);
                 try {
                     Scanner scanner = new Scanner(file);
                     scanner.useDelimiter("\\n");
@@ -40,6 +39,7 @@ public class SimpleFileEditor extends JPanel {
                             text.append("\n");
                     }
                     editableArea.setText(text.toString());
+                    editableArea.repaint();
                 } catch (FileNotFoundException e) {
                     editableArea.setText(e.getMessage());
                     editableArea.setEditable(false);
@@ -48,6 +48,13 @@ public class SimpleFileEditor extends JPanel {
             }
         });
         return openButton;
+    }
+
+    private void setAppropriateSyntax(File f) {
+        if (f.getName().endsWith(".js"))
+            editableArea.changeSyntax(SupportedSyntax.ECMASCRIPT);
+        else
+            editableArea.changeSyntax(SupportedSyntax.JAVA);
     }
 
     private static final JButton savingButton(SimpleFileEditor fileEditor, JFileChooser fileChooser, EditorComponent editableArea) {
@@ -85,25 +92,7 @@ public class SimpleFileEditor extends JPanel {
 
         add(buttonPanel, BorderLayout.PAGE_START);
         add(editScrollPane, BorderLayout.CENTER);
-        editableArea.setText(readDefaultFile());
-//        editableArea.addCaretListener(caretEvent -> {
-//            CodeDocument codeDocument = (CodeDocument)editableArea.getDocument();
-//            BracketHighlighting highlighting = codeDocument.getBracketHighlighting(caretEvent.getDot());
-//
-//            Highlighter.HighlightPainter errorBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.RED);
-//            Highlighter.HighlightPainter correctBracketsPainter = new DefaultHighlighter.DefaultHighlightPainter(Color.YELLOW);
-//
-//            Highlighter highlighter = editableArea.getHighlighter();
-//            highlighter.removeAllHighlights();
-//            try {
-//                for (int workingBrace : highlighting.getWorkingBraces())
-//                    highlighter.addHighlight(workingBrace, workingBrace + 1, correctBracketsPainter);
-//                for (int brokenBrace : highlighting.getBrokenBraces())
-//                    highlighter.addHighlight(brokenBrace, brokenBrace + 1, errorBracketsPainter);
-//            } catch (BadLocationException e1) {
-//                e1.printStackTrace();
-//            }
-//        });
+//        editableArea.setText(readDefaultFile());
     }
 
     private String readDefaultFile() {

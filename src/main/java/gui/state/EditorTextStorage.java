@@ -169,4 +169,9 @@ public class EditorTextStorage {
         result.add(str.substring(initialIndex));
         return result;
     }
+
+    public void changeSyntax(SupportedSyntax syntax) {
+        index = new LexemeIndex(syntax, getText());
+        this.syntax = syntax;
+    }
 }

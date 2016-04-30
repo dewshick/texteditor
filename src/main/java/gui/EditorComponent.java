@@ -40,6 +40,10 @@ public class EditorComponent extends JComponent implements Scrollable {
         addCaretBlink();
     }
 
+    public void changeSyntax(SupportedSyntax syntax) {
+        state.changeSyntax(syntax);
+    }
+
     public void setEditable(boolean editable) { this.editable = editable; }
 
     /**
