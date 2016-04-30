@@ -3,6 +3,7 @@ package gui.state;
 import syntax.document.SupportedSyntax;
 
 import java.awt.*;
+import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.time.Instant;
 import java.time.LocalDate;
@@ -16,13 +17,23 @@ public class EditorState {
         textStorage = new EditorTextStorage(syntax);
         caret = new Caret();
         selection = new Selection();
+        loadingTask = Optional.empty();
     }
 
     EditorTextStorage textStorage;
-
     Caret caret;
-
     Selection selection;
+    Optional<Thread> loadingTask;
+
+    public void setText(String text) {
+        Thread initialJob = new Thread(() -> textStorage.setText(text));
+        loadingTask = Optional.of(initialJob);
+        initialJob.start();
+    }
+
+    public boolean isAvailable() {
+        return (!loadingTask.isPresent()) || (!loadingTask.get().isAlive());
+    }
 
     @Deprecated
     public EditorTextStorage getTextStorage() {

@@ -54,9 +54,13 @@ public class EditorRenderer {
         Rectangle clip = g.getClipBounds();
         fillRectWithColor(g, clip, EditorColors.BACKGROUND);
 
+        if (!state.isAvailable()) {
+            drawStringWithColor(g, "Loading, please wait...", new Point(0, 0), EditorColors.COMMENT);
+            return;
+        }
+
         selectionInBounds(clip).forEach(rect -> fillRectWithColor(g, rect, EditorColors.SELECTION));
 
-        int xOffset = clip.x;
         int yOffset = utils.fontHeight();
         int yCoord = 0;
 

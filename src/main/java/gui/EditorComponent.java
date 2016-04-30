@@ -4,9 +4,7 @@ import gui.state.CaretDirection;
 import gui.state.EditorState;
 import gui.view.EditorRenderer;
 import gui.view.TextCoordUtils;
-import sun.security.provider.certpath.CollectionCertStore;
 import syntax.document.SupportedSyntax;
-
 import java.util.*;
 import javax.swing.*;
 import java.awt.*;
@@ -20,7 +18,11 @@ import java.util.Timer;
 public class EditorComponent extends JComponent implements Scrollable {
     boolean editable;
 
-    public void setText(String text) { state.getTextStorage().setText(text); }
+    public void setText(String text) {
+        setEnabled(false);
+        state.setText(text);
+    }
+
     public String getText() { return state.getTextStorage().getText(); }
 
     EditorState state;
