@@ -4,6 +4,7 @@ import gui.state.CaretDirection;
 import gui.state.EditorState;
 import gui.view.EditorRenderer;
 import gui.view.TextCoordUtils;
+import sun.security.provider.certpath.CollectionCertStore;
 import syntax.document.SupportedSyntax;
 
 import java.util.*;
@@ -84,10 +85,12 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     public Dimension getPreferredSize() {
         Dimension rendererPreferredSize = renderer.getPreferredSize();
+        Dimension minimalDimension = new Dimension(500, 300);
         Rectangle visibleRect = getVisibleRect();
+
         return new Dimension(
-                Math.max(visibleRect.width, rendererPreferredSize.width),
-                Math.max(visibleRect.height, rendererPreferredSize.height));
+                Collections.max(Arrays.asList(visibleRect.width, rendererPreferredSize.width, minimalDimension.width)),
+                Collections.max(Arrays.asList(visibleRect.height, rendererPreferredSize.height, minimalDimension.width)));
     }
 
     /**
