@@ -17,12 +17,32 @@ public class ColoredStringNavigator {
     List<List<ColoredString>> coloredLines;
     LastIteratorAction lastLineIterAction;
 
+//    half-working copying constructor, although suitable for our needs
+    public ColoredStringNavigator(ColoredStringNavigator toCopy) {
+        coloredLines = toCopy.coloredLines;
+        lastLineIterAction = toCopy.lastLineIterAction;
+        linesIterator = coloredLines.listIterator(toCopy.linesIterator.nextIndex());
+        currentLineIterator = toCopy.currentLine().listIterator(toCopy.currentLineIterator.nextIndex());
+    }
+
     public ColoredStringNavigator(TreeList<List<ColoredString>> coloredLines) {
         if (coloredLines.isEmpty()) coloredLines.add(new TreeList<>());
         this.linesIterator = coloredLines.listIterator();
         this.coloredLines = coloredLines;
         lastLineIterAction = LastIteratorAction.NOTHING;
         nextLine();
+    }
+
+    private List<ColoredString> currentLine() {
+        List<ColoredString> result;
+        if (lastLineIterAction == LastIteratorAction.NEXT) {
+            result = linesIterator.previous();
+            linesIterator.next();
+        } else {
+            result = linesIterator.next();
+            linesIterator.previous();
+        }
+        return result;
     }
 
     public boolean hasNext() {

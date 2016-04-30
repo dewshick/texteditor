@@ -128,7 +128,30 @@ public class LexemesIteratorTest {
     }
 
     private void assertStorageUpdatedCorrectly(ColoredLinesStorage updated, List<Lexeme> src) {
-        assertEquals(updated.getColoredLines().toString(), lexemesStorage(src).getColoredLines().toString());
+        assertEquals(lexemesStorage(src).getColoredLines().toString(), updated.getColoredLines().toString());
+    }
+
+    private void testForwardRemoval(List<Lexeme> lexemes) {
+        List<Lexeme> expectedList = new ArrayList<>(lexemes);
+        initWithLexemes(expectedList);
+        LexemesIterator iter = lines.lexemesIterator();
+        while (iter.hasNext()) {
+            iter.next();
+            iter.remove();
+        }
+        assertStorageUpdatedCorrectly(lines, new ArrayList<>());
+    }
+
+    private void testBackwardRemoval(List<Lexeme> lexemes) {
+        List<Lexeme> expectedList = new ArrayList<>(lexemes);
+        initWithLexemes(expectedList);
+        LexemesIterator iter = lines.lexemesIterator();
+        while (iter.hasNext()) iter.next();
+        while (iter.hasPrevious()) {
+            iter.previous();
+            iter.remove();
+        }
+        assertStorageUpdatedCorrectly(lines, new ArrayList<>());
     }
 
     @Test
@@ -151,5 +174,15 @@ public class LexemesIteratorTest {
     @Test
     public void removeNextLexeme() {
         lexemePermutations(3).forEach(this::testRemovingLexemeForward);
+    }
+
+    @Test
+    public void removeAllLexemesForward() {
+        lexemePermutations(3).forEach(this::testForwardRemoval);
+    }
+
+    @Test
+    public void removeAllLexemesBackward() {
+        lexemePermutations(3).forEach(this::testBackwardRemoval);
     }
 }

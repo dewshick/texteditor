@@ -23,8 +23,11 @@ public class ListIteratorWithOffset implements ListIterator<LexemeWithOffset>, I
     }
 
     public ListIteratorWithOffset copy() {
-//        new ListIteratorWithOffset()
-        throw new RuntimeException("not implemented, but should be");
+        ListIteratorWithOffset result = new ListIteratorWithOffset(listIterator.copy());
+        result.lastAction = lastAction;
+        result.offset = offset;
+        result.lastReturned = lastReturned;
+        return result;
     }
 
     public LexemesIterator getListIterator() {

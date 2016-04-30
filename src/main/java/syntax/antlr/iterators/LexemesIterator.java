@@ -18,7 +18,6 @@ import static syntax.EditorUtil.*;
  */
 public class LexemesIterator implements ListIterator<Lexeme> {
     ColoredStringNavigator navigator;
-    Optional<Lexeme> lastReturned;
     LastIteratorAction lastAction;
     SyntaxColoring coloring;
 
@@ -110,12 +109,14 @@ public class LexemesIterator implements ListIterator<Lexeme> {
     }
 
 //    TODO: refactor
-//    why java's iterators are so unusable? maybe should write my own one?
+//    why java's iterators are so unusable? maybe should write my own one without state?
     @Override
     public void remove() {
         if (lastAction == LastIteratorAction.PREVIOUS) {
             ListIterator<List<ColoredString>> iter =  navigator.linesIterator;
+            int iterIndex = iter.nextIndex();
             ListIterator<ColoredString> current = navigator.currentLineIterator;
+
             List<ColoredString> firstLine;
             List<ColoredString> lastLine = new ArrayList<>();
 
@@ -126,7 +127,6 @@ public class LexemesIterator implements ListIterator<Lexeme> {
                 firstLine = iter.next();
                 iter.remove();
             }
-
 
             ColoredString removedString = current.next();
             current.remove();
@@ -149,6 +149,9 @@ public class LexemesIterator implements ListIterator<Lexeme> {
             }
             firstLine.addAll(lastLine);
             iter.add(firstLine);
+            iter.previous();
+            iter.next();
+            navigator.currentLineIterator = firstLine.listIterator(iterIndex);
         } else if (lastAction == LastIteratorAction.NEXT) {
             ListIterator<List<ColoredString>> iter =  navigator.linesIterator;
             ListIterator<ColoredString> current = navigator.currentLineIterator;
@@ -185,8 +188,12 @@ public class LexemesIterator implements ListIterator<Lexeme> {
                     break;
                 }
             }
+            int iterIndex = current.nextIndex();
             lastLine.addAll(firstLine);
             iter.add(lastLine);
+            iter.previous();
+            iter.next();
+            navigator.currentLineIterator = lastLine.listIterator(iterIndex);
         } else throw new RuntimeException("Cannot remove element, because removal direction is unknown.");
 
         lastAction = LastIteratorAction.NOTHING;
@@ -232,7 +239,14 @@ public class LexemesIterator implements ListIterator<Lexeme> {
         return new Lexeme(type, lexemeText);
     }
 
+//    half-working copy, suitable for our needs
+    public LexemesIterator(LexemesIterator toCopy) {
+        coloring = toCopy.coloring;
+        lastAction = toCopy.lastAction;
+        navigator = new ColoredStringNavigator(toCopy.navigator);
+    }
+
     public LexemesIterator copy() {
-        throw new RuntimeException("not implemented, but should be");
+        return new LexemesIterator(this);
     }
 }
