@@ -2,6 +2,7 @@ package gui.state;
 
 import syntax.document.SupportedSyntax;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
@@ -25,22 +26,29 @@ public class EditorState {
     Selection selection;
     Optional<Thread> loadingTask;
 
-    public void setText(String text) {
+    public synchronized void setText(String text) {
         Thread initialJob = new Thread(() -> {
-            textStorage.setText(text);
-            caret = new Caret();
-            selection = new Selection();
+//            recompute in background, set in EDT
+            EditorTextStorage storage = new EditorTextStorage(textStorage.getSyntax());
+            storage.setText(text);
+            SwingUtilities.invokeLater(() -> setTextStorage(storage));
         });
+        selection = new Selection();
+        caret.setRelativePosition(new Point(0,0), false);
         loadingTask = Optional.of(initialJob);
         initialJob.start();
     }
 
-    public boolean isAvailable() {
+    public synchronized boolean isAvailable() {
         return (!loadingTask.isPresent()) || (!loadingTask.get().isAlive());
     }
 
+    private synchronized void setTextStorage(EditorTextStorage st) {
+        textStorage = st;
+    }
+
     @Deprecated
-    public EditorTextStorage getTextStorage() {
+    public synchronized EditorTextStorage getTextStorage() {
         return textStorage;
     }
 

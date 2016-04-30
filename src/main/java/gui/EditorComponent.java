@@ -19,7 +19,6 @@ public class EditorComponent extends JComponent implements Scrollable {
     boolean editable;
 
     public void setText(String text) {
-        setEnabled(false);
         state.setText(text);
     }
 

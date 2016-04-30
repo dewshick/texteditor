@@ -19,6 +19,11 @@ public class EditorTextStorage {
     List<String> lines;
 
     LexemeIndex index;
+
+    public SupportedSyntax getSyntax() {
+        return syntax;
+    }
+
     SupportedSyntax syntax;
 
     public EditorTextStorage(SupportedSyntax syntax) {
