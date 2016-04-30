@@ -42,4 +42,14 @@ public class ColoredString {
     public String getType() {
         return type;
     }
+
+    @Override
+    public String toString() {
+        return "ColoredString{" +
+                "content='" + content + '\'' +
+                ", color=" + color +
+                ", indexInLexeme=" + indexInLexeme +
+                ", type='" + type + '\'' +
+                '}';
+    }
 }

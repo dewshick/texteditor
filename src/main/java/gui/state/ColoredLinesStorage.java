@@ -14,7 +14,7 @@ import java.util.List;
 /**
 * Created by avyatkin on 25/04/16.
 */
-public class ColoredLinesList {
+public class ColoredLinesStorage {
     public TreeList<List<ColoredString>> getColoredLines() {
         return coloredLines;
     }
@@ -23,7 +23,7 @@ public class ColoredLinesList {
     SyntaxColoring coloring;
     LexemesIterator addingIterator;
 
-    public ColoredLinesList(SyntaxColoring coloring) {
+    public ColoredLinesStorage(SyntaxColoring coloring) {
         coloredLines = new TreeList<>();
         this.coloring = coloring;
         addingIterator = new LexemesIterator(coloredLines, coloring);

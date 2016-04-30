@@ -1,7 +1,7 @@
 package syntax.antlr;
 
 import com.sun.tools.javac.util.Pair;
-import gui.state.ColoredLinesList;
+import gui.state.ColoredLinesStorage;
 import gui.state.ColoredString;
 import gui.view.EditorColors;
 import org.apache.commons.io.input.ReaderInputStream;
@@ -31,11 +31,11 @@ public class LexemeIndex {
     Lexer lexer;
     SupportedSyntax syntax;
 
-    public ColoredLinesList getColoredLinesList() {
+    public ColoredLinesStorage getColoredLinesList() {
         return coloredLinesList;
     }
 
-    ColoredLinesList coloredLinesList;
+    ColoredLinesStorage coloredLinesList;
     SyntaxColoring coloring;
 
     public LexemeIndex(SupportedSyntax syntax, String code) {
@@ -43,7 +43,7 @@ public class LexemeIndex {
         coloring = EditorColors.forSyntax(syntax);
         lexer = lexerByInputStream(new ANTLRInputStream(code));
 
-        coloredLinesList = new ColoredLinesList(coloring);
+        coloredLinesList = new ColoredLinesStorage(coloring);
 
         lexer.getAllTokens().forEach(t -> coloredLinesList.add(lexemeFromToken(t).getLexeme()));
     }

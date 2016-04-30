@@ -1,6 +1,6 @@
 package iterators;
 
-import gui.state.ColoredLinesList;
+import gui.state.ColoredLinesStorage;
 import gui.view.EditorColors;
 import org.junit.Test;
 import org.paukov.combinatorics.Factory;
@@ -24,12 +24,16 @@ public class LexemesIteratorTest {
     Lexeme threeLinedLexeme = new Lexeme("long", "one long\nlong multiline\n lexeme");
     List<Lexeme> availableLexemes = Arrays.asList(oneLinedLexeme, twoLinedLexeme, threeLinedLexeme);
 
-    ColoredLinesList lines;
-
+    ColoredLinesStorage lines;
 
     private void initWithLexemes(List<Lexeme> lexemes) {
-        lines = new ColoredLinesList(EditorColors.forSyntax(SupportedSyntax.JAVA));
-        for (Lexeme l : lexemes) lines.add(l);
+        lines = lexemesStorage(lexemes);
+    }
+
+    private ColoredLinesStorage lexemesStorage(List<Lexeme> lexemes) {
+        ColoredLinesStorage st = new ColoredLinesStorage(EditorColors.forSyntax(SupportedSyntax.JAVA));
+        for (Lexeme l : lexemes) st.add(l);
+        return st;
     }
 
     private void testInitializingWithLexemes(List<Lexeme> lexemes) {
@@ -74,7 +78,8 @@ public class LexemesIteratorTest {
                 expected.add(lexemePlace, l);
 
                 List<Lexeme> actual = lexemesAfterForwardTraversal();
-                assertEquals(expected.toString(), actual.toString());
+                assertStorageUpdatedCorrectly(lines, expected);
+//                assertEquals(expected.toString(), actual.toString());
             });
         }
     }
@@ -93,7 +98,8 @@ public class LexemesIteratorTest {
             });
             actualIter.remove(); expectedIter.remove();
 
-            assertEquals(expectedList, lexemesAfterForwardTraversal());
+            assertStorageUpdatedCorrectly(lines, expectedList);
+//            assertEquals(expectedList, lexemesAfterForwardTraversal());
         });
     }
 
@@ -107,7 +113,8 @@ public class LexemesIteratorTest {
             expectdIter.remove();
             actualIter.remove();
 
-            assertEquals(expectedList, lexemesAfterForwardTraversal());
+            assertStorageUpdatedCorrectly(lines, expectedList);
+//            assertEquals(expectedList, lexemesAfterForwardTraversal());
         });
     }
 
@@ -118,6 +125,10 @@ public class LexemesIteratorTest {
         for (ICombinatoricsVector<Lexeme> perm : gen)
             result.add(perm.getVector());
         return result;
+    }
+
+    private void assertStorageUpdatedCorrectly(ColoredLinesStorage updated, List<Lexeme> src) {
+        assertEquals(updated.getColoredLines().toString(), lexemesStorage(src).getColoredLines().toString());
     }
 
     @Test
