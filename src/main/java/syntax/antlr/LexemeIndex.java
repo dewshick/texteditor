@@ -32,7 +32,6 @@ public class LexemeIndex {
 
     Lexer lexer;
     SupportedSyntax syntax;
-    BracketIndex bracketIndex;
 
     public LexemeIndex(SupportedSyntax syntax, String code) {
         this.syntax = syntax;
@@ -76,15 +75,11 @@ public class LexemeIndex {
         return new ColoredText(result);
     }
 
-    public BracketHighlighting getHighlighting(Point caret) {
-        return bracketIndex.getHighlighting(caret);
-    }
-
     private Lexeme lexemeFromToken(Token current) {
         int offset = current.getStartIndex();
         int distanceToNextToken = current.getText().length();
         String tokenType = getTokenType(current);
-        return new Lexeme(offset, distanceToNextToken, distanceToNextToken, tokenType, current.getText());
+        return new Lexeme(offset, tokenType, current.getText());
     }
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
@@ -129,7 +124,7 @@ public class LexemeIndex {
     private ListIterator<Lexeme> beforeFirstAffectedLexeme(int offset) {
         ListIterator<Lexeme> iterator = lexemes.listIterator();
         if (lexemes.isEmpty()) return iterator;
-        Function<Lexeme, Integer> lexemeEnd = lx -> lx.getOffset() + lx.getDistanceToNextToken();
+        Function<Lexeme, Integer> lexemeEnd = lx -> lx.getOffset() + lx.getSize();
         Lexeme currentLexeme = iterator.next();
         while (iterator.hasNext() && lexemeEnd.apply(currentLexeme) < offset) currentLexeme = iterator.next();
         iterator.previous();

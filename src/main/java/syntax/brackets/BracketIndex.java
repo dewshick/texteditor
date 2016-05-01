@@ -69,24 +69,5 @@ public class BracketIndex {
 
     HashMap<Point, List<Point>> brokenBracesForCaret;
     HashMap<Point, List<Point>> correctBracesForCaret;
-
-    class ColoredStringWithCoords {
-        ColoredString string;
-
-        public Point getCoords() {
-            return coords;
-        }
-
-        public ColoredString getString() {
-            return string;
-        }
-
-        Point coords;
-
-        public ColoredStringWithCoords(ColoredString string, Point coords) {
-            this.string = string;
-            this.coords = coords;
-        }
-    }
 }
 

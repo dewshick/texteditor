@@ -1,16 +1,10 @@
 package gui.view;
 
-import syntax.antlr.LexemeIndex;
-import syntax.brackets.BracketIndex;
-import syntax.document.CodeDocument;
 import syntax.document.SupportedSyntax;
 import syntax.document.SyntaxColorRule;
 import syntax.document.SyntaxColoring;
-
 import java.awt.*;
-import java.awt.List;
 import java.util.*;
-import java.util.function.Function;
 
 /**
  * Created by avyatkin on 23/04/16.
@@ -38,7 +32,7 @@ public class EditorColors {
 
     private static SyntaxColoring coloringForLanguage(String[] keywordTokens,
                                                             String identifier,
-                                                            String[] commentTokens) { // String[][] bracketPairs, SupportedSyntax syntax
+                                                            String[] commentTokens) {
         java.util.List<SyntaxColorRule> colorRules = Arrays.asList(
                 new SyntaxColorRule(KEYWORD, keywordTokens),
                 new SyntaxColorRule(IDENTIFIER, identifier),

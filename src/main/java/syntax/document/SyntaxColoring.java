@@ -23,10 +23,6 @@ public class SyntaxColoring {
         defaultColor = defaultColor1;
     }
 
-    public List<ColoredString> colorizeLexemes(List<Lexeme> lexemes) {
-        return lexemes.stream().map(this::colorizeLexeme).collect(Collectors.toList());
-    }
-
     public ColoredString colorizeLexeme(Lexeme lexeme) {
         return new ColoredString(lexeme.getText(), getColor(lexeme), lexeme.getType());
     }

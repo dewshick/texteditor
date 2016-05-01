@@ -18,11 +18,6 @@ import java.util.stream.IntStream;
  * all operations are done in relative coords (number of char in line/number of line)
  */
 public class EditorTextStorage {
-    public synchronized void setLines(ColoredText lines) {
-        this.lines = lines;
-    }
-
-    //    List<String> lines;
     ColoredText lines;
 
     CompletableFuture<LexemeIndex> index;
