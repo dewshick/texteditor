@@ -62,6 +62,7 @@ public class EditorTextStorage {
 
 //    TODO: move async logic here
     public synchronized void setText(String text) {
+        index.cancel(true);
         sync = false;
         index = CompletableFuture.completedFuture(new LexemeIndex(syntax, text));
         forceSync();
@@ -197,6 +198,7 @@ public class EditorTextStorage {
     }
 
     public synchronized EditorTextStorage changeSyntax(SupportedSyntax syntax) {
+        index.cancel(true);
         index = CompletableFuture.completedFuture(new LexemeIndex(syntax, getText()));
         this.syntax = syntax;
         return this;
