@@ -92,7 +92,7 @@ public class EditorTextStorage {
         sync = false;
         int offset = offsetFromCoords(position);
         lines.addText(position, text);
-        index = index.thenApply(lexemes -> lexemes.addText(offset, text));
+        index = index.thenApplyAsync(lexemes -> lexemes.addText(offset, text));
         return this;
     }
 
@@ -105,7 +105,7 @@ public class EditorTextStorage {
         int startOffset = offsetFromCoords(start);
         int endOffset = offsetFromCoords(end);
         lines.removeText(start, end);
-        index = index.thenApply(lexemes -> lexemes.removeText(startOffset, endOffset - startOffset));
+        index = index.thenApplyAsync(lexemes -> lexemes.removeText(startOffset, endOffset - startOffset));
     }
 
     public synchronized void removeText(EditorState.Selection selection) {
