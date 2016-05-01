@@ -20,6 +20,7 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     public void setText(String text) {
         state.setText(text);
+        editable = false;
     }
 
     public String getText() { return state.getTextStorage().getText(); }
@@ -27,6 +28,13 @@ public class EditorComponent extends JComponent implements Scrollable {
     EditorState state;
     TextCoordUtils coordUtils;
     EditorRenderer renderer;
+
+//    TODO deal somehow with scroll pane update and remove this ugly workaround
+    public void setScrollPane(JScrollPane pane) {
+        scrollPane = pane;
+    }
+
+    JScrollPane scrollPane;
 
     public EditorComponent(SupportedSyntax syntax) {
         state = new EditorState(syntax);
@@ -42,8 +50,6 @@ public class EditorComponent extends JComponent implements Scrollable {
     public void changeSyntax(SupportedSyntax syntax) {
         state.changeSyntax(syntax);
     }
-
-    public void setEditable(boolean editable) { this.editable = editable; }
 
     /**
      * Scrollable implementation
@@ -114,6 +120,11 @@ public class EditorComponent extends JComponent implements Scrollable {
     }
 
     public void updateView(boolean caretMoved) {
+        if (state.isAvailable() && !editable && scrollPane != null) {
+            editable = true;
+            scrollPane.revalidate();
+            scrollPane.repaint();
+        }
         if (caretMoved) scrollRectToVisible(renderer.getCaretRenderer().caretRect());
         repaint();
     }

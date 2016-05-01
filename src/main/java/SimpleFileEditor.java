@@ -42,7 +42,6 @@ public class SimpleFileEditor extends JPanel {
                     editableArea.repaint();
                 } catch (FileNotFoundException e) {
                     editableArea.setText(e.getMessage());
-                    editableArea.setEditable(false);
                 }
 
             }
@@ -69,7 +68,6 @@ public class SimpleFileEditor extends JPanel {
                     writer.flush();
                 } catch (FileNotFoundException e) {
                     editableArea.setText(e.getMessage());
-                    editableArea.setEditable(false);
                 }
             }
 //            editableArea.setCaretPosition(editableArea.getDocument().getLength());
@@ -82,9 +80,11 @@ public class SimpleFileEditor extends JPanel {
         super(new BorderLayout());
         fc = new JFileChooser();
         editableArea = initEditableArea();
+        editScrollPane = new JScrollPane(editableArea);
+        editableArea.setScrollPane(editScrollPane);
+
         saveButton = savingButton(this, fc, editableArea);
         openButton = openingButton(this, fc, editableArea);
-        editScrollPane = new JScrollPane(editableArea);
 
         JPanel buttonPanel = new JPanel();
         buttonPanel.add(openButton);
