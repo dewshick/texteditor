@@ -16,11 +16,9 @@ import java.util.Timer;
  * Created by avyatkin on 06/04/16.
  */
 public class EditorComponent extends JComponent implements Scrollable {
-    boolean editable;
 
     public void setText(String text) {
-        state.setText(text);
-        editable = false;
+        state.setText(text, this);
     }
 
     public String getText() { return state.getTextStorage().getText(); }
@@ -40,7 +38,6 @@ public class EditorComponent extends JComponent implements Scrollable {
         state = new EditorState(syntax);
         coordUtils = new TextCoordUtils(this);
         renderer = new EditorRenderer(state, coordUtils);
-        editable = true;
         setDoubleBuffered(true);
         addFocusRelatedListeners();
         addCaretRelatedActions();
@@ -119,12 +116,13 @@ public class EditorComponent extends JComponent implements Scrollable {
         renderer.paintState(g);
     }
 
+    public void updateViewWithScroll() {
+        scrollPane.revalidate();
+        scrollPane.repaint();
+        repaint();
+    }
+
     public void updateView(boolean caretMoved) {
-        if (state.isAvailable() && !editable && scrollPane != null) {
-            editable = true;
-            scrollPane.revalidate();
-            scrollPane.repaint();
-        }
         if (caretMoved) scrollRectToVisible(renderer.getCaretRenderer().caretRect());
         repaint();
     }

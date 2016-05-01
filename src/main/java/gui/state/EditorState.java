@@ -1,5 +1,6 @@
 package gui.state;
 
+import gui.EditorComponent;
 import syntax.document.SupportedSyntax;
 
 import javax.swing.*;
@@ -28,12 +29,15 @@ public class EditorState {
     Selection selection;
     Optional<Thread> loadingTask;
 
-    public synchronized void setText(String text) {
+    public synchronized void setText(String text, EditorComponent comp) {
         Thread initialJob = new Thread(() -> {
 //            recompute in background, set in EDT
             EditorTextStorage storage = new EditorTextStorage(textStorage.getSyntax());
             storage.setText(text);
-            SwingUtilities.invokeLater(() -> setTextStorage(storage));
+            SwingUtilities.invokeLater(() -> {
+                setTextStorage(storage);
+                comp.updateViewWithScroll();
+            });
         });
         selection = new Selection();
         caret.setRelativePosition(new Point(0,0), false);
