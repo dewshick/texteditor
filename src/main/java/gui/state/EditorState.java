@@ -2,16 +2,10 @@ package gui.state;
 
 import gui.EditorComponent;
 import syntax.document.SupportedSyntax;
-
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
-import java.time.Instant;
-import java.time.LocalDate;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Function;
 
 /**
  * Created by avyatkin on 22/04/16.

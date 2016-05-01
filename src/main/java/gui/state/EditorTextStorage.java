@@ -1,15 +1,15 @@
 package gui.state;
 
 import com.sun.tools.javac.util.Pair;
+import gui.state.lastaction.ExpirableAction;
 import syntax.antlr.ColoredText;
-import syntax.antlr.LexemeIndex;
 import syntax.brackets.BracketHighlighting;
 import syntax.brackets.BracketIndex;
 import syntax.document.SupportedSyntax;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CompletableFuture;
+import java.util.Optional;
 import java.util.stream.IntStream;
 
 /**
@@ -20,7 +20,8 @@ import java.util.stream.IntStream;
 public class EditorTextStorage {
     ColoredText lines;
 
-    CompletableFuture<LexemeIndex> index;
+    RelexingLauncher relexer;
+    Optional<ExpirableAction> recentAction;
 
     public synchronized SupportedSyntax getSyntax() {
         return syntax;
@@ -29,12 +30,14 @@ public class EditorTextStorage {
     SupportedSyntax syntax;
     BracketIndex highlighting;
 
+
     boolean sync;
 
     public EditorTextStorage(SupportedSyntax syntax) {
-        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, ""));
+        relexer = new RelexingLauncher(syntax, "");
         forceSync();
         this.syntax = syntax;
+        recentAction = Optional.empty();
     }
 
     public synchronized String getText() { return lines.getText(); }
@@ -42,7 +45,7 @@ public class EditorTextStorage {
     private synchronized void forceSync() {
         try {
             if (sync) return;
-            Pair<BracketIndex, ColoredText> state = index.get().getState();
+            Pair<BracketIndex, ColoredText> state = relexer.getState();
             highlighting = state.fst;
             lines = state.snd;
             sync = true;
@@ -52,14 +55,14 @@ public class EditorTextStorage {
     }
 
     public synchronized void syncIfPossible() {
-        if (index.isDone()) forceSync();
+        relexer.tick();
+        if (relexer.isDone()) forceSync();
     }
 
 //    TODO: move async logic here
     public synchronized void setText(String text) {
-        index.cancel(true);
         sync = false;
-        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, text));
+        relexer.reinitialize(syntax, text);
         forceSync();
     }
 
@@ -88,7 +91,8 @@ public class EditorTextStorage {
         sync = false;
         int offset = offsetFromCoords(position);
         lines.addText(position, text);
-        index = index.thenApplyAsync(lexemes -> lexemes.addText(offset, text));
+
+        relexer.addText(offset, text);
         return this;
     }
 
@@ -101,7 +105,7 @@ public class EditorTextStorage {
         int startOffset = offsetFromCoords(start);
         int endOffset = offsetFromCoords(end);
         lines.removeText(start, end);
-        index = index.thenApplyAsync(lexemes -> lexemes.removeText(startOffset, endOffset - startOffset));
+        relexer.removeText(startOffset, endOffset - startOffset);
     }
 
     public synchronized void removeText(EditorState.Selection selection) {
@@ -193,8 +197,7 @@ public class EditorTextStorage {
     }
 
     public synchronized EditorTextStorage changeSyntax(SupportedSyntax syntax) {
-        index.cancel(true);
-        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, getText()));
+        relexer.reinitialize(syntax, getText());
         this.syntax = syntax;
         return this;
     }

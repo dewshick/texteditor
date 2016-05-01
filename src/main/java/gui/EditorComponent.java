@@ -12,11 +12,11 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Created by avyatkin on 06/04/16.
  */
+
 public class EditorComponent extends JComponent implements Scrollable {
 
     public void setText(String text) {
@@ -28,6 +28,7 @@ public class EditorComponent extends JComponent implements Scrollable {
     EditorState state;
     TextCoordUtils coordUtils;
     EditorRenderer renderer;
+
 
 //    TODO deal somehow with scroll pane update and remove this ugly workaround
     public void setScrollPane(JScrollPane pane) {
