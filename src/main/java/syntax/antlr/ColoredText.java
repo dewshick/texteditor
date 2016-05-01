@@ -77,7 +77,7 @@ public class ColoredText {
                 remaining.add(lineIter.next());
                 lineIter.remove();
             }
-            remaining.subList(1, lastIndex).forEach(line -> linesIter.add(new TreeList<>(Arrays.asList())));
+            newLines.subList(1, lastIndex).forEach(line -> linesIter.add(new TreeList<>(Arrays.asList(line))));
             linesIter.add(remaining);
         }
         rebuildText();

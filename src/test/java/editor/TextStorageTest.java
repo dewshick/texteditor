@@ -10,6 +10,7 @@ import syntax.document.SupportedSyntax;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -32,59 +33,60 @@ public class TextStorageTest {
         anotherIndex = new LexemeIndex(SupportedSyntax.JAVA, text);
     }
 
+    List<String> pastedTemplates = Arrays.asList("\n", "\n\n", "\n\n\n\n\n\n\n", "\nhello", "\nyeah\n", "whatever", "what\never", "what\nso\never", "too\nmany\nnewlines\nyeah\n");
+
+    private void pastingTest(Point coords) {
+        pastedTemplates.forEach(str -> {
+            init();
+            pasteText(coords, str);
+            assertStateIsCorrect(str);
+        });
+    }
+
     @Test
     public void addInBeginning() {
-        pasteText(new Point(0,0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 0));
     }
 
     @Test
     public void addOnStartOfMiddleLine() {
-        pasteText(new Point(0,1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 1));
     }
 
     @Test
     public void addOnStartOfLastLine() {
-        pasteText(new Point(0,2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 2));
     }
 
     @Test
     public void addOnEndOfFirstLine() {
-        pasteText(new Point("firstline endoffirstline".length(), 0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("firstline endoffirstline".length(), 0));
     }
 
     @Test
     public void addOnEndOfMiddleLine() {
-        pasteText(new Point("secondline endofsecondline".length(), 1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("secondline endofsecondline".length(), 1));
     }
 
     @Test
     public void addOnEndOfLastLine() {
-        pasteText(new Point("thirdline endofthirdline".length(), 2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("thirdline endofthirdline".length(), 2));
     }
 
 
     @Test
     public void addInMiddleOfFirstLine() {
-        pasteText(new Point("firstline".length(), 0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("firstline".length(), 0));
     }
 
     @Test
     public void addInMiddleOfMiddleLine() {
-        pasteText(new Point("secondline".length(), 1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("secondline".length(), 1));
     }
 
     @Test
     public void addInMiddleOfLastLine() {
-        pasteText(new Point("thirdline".length(), 2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("thirdline".length(), 2));
     }
 
     @Test
@@ -212,8 +214,13 @@ public class TextStorageTest {
     }
 
     private void assertStateIsCorrect() {
-        assertEquals(text, textStorage.getText());
-        assertEquals(text, index.getState().snd.getText());
-        assertEquals(text, anotherIndex.getState().snd.getText());
+        assertStateIsCorrect("");
+    }
+
+    private void assertStateIsCorrect(String added) {
+        String description = added.replace("\n", "\\n");
+        assertEquals(description, text, textStorage.getText());
+        assertEquals(description, text, index.getState().snd.getText());
+        assertEquals(description, text, anotherIndex.getState().snd.getText());
     }
 }
