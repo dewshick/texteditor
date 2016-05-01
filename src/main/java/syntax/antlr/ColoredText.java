@@ -1,7 +1,9 @@
 package syntax.antlr;
 
 import com.sun.tools.javac.util.Pair;
+import gui.EditorComponent;
 import gui.state.ColoredString;
+import gui.state.EditorTextStorage;
 import org.apache.commons.collections4.list.TreeList;
 
 import java.awt.*;
@@ -18,21 +20,27 @@ import java.util.stream.IntStream;
  * Created by avyatkin on 01/05/16.
  */
 public class ColoredText {
-    public void setColoredLines(List<List<ColoredString>> coloredLines) {
-        this.coloredLines = coloredLines;
-    }
 
 //    TODO: cache value
     public String getText() {
-        return coloredLines.stream().
-                map(strings -> String.join("", strings.stream().map(ColoredString::getContent).
-                        collect(Collectors.toList()))).
-                collect(Collectors.joining());
+        return text;
     }
 
 //    TODO: cache value
     public String getLine(int n) {
-        return coloredLines.get(n).stream().map(ColoredString::getContent).collect(Collectors.joining());
+        return lines.get(n);
+    }
+
+    String text;
+    List<String> lines;
+
+    private void rebuildText() {
+        StringBuilder textBuilder = new StringBuilder();
+        for (List<ColoredString> strs : coloredLines)
+            for (ColoredString str: strs)
+                textBuilder.append(str.getContent());
+        text = textBuilder.toString();
+        lines = EditorTextStorage.buildLinesList(text, true);
     }
 
     public List<ColoredString> getColoredLine(int n) {
@@ -45,12 +53,9 @@ public class ColoredText {
 
     List<List<ColoredString>> coloredLines;
 
-    public ColoredText() {
-        coloredLines = new TreeList<>(new TreeList<>());
-    }
-
     public ColoredText(List<List<ColoredString>> coloredStrings) {
         this.coloredLines = coloredStrings;
+        rebuildText();
     }
 
     public void addText(Point position, String text) {
@@ -75,6 +80,7 @@ public class ColoredText {
             remaining.subList(1, lastIndex).forEach(line -> linesIter.add(new TreeList<>(Arrays.asList())));
             linesIter.add(remaining);
         }
+        rebuildText();
     }
 
     public void removeText(Point start, Point end) {
@@ -90,6 +96,7 @@ public class ColoredText {
         ListIterator<List<ColoredString>> linesIterator = iters.fst;
         IntStream.rangeClosed(start.y, end.y).forEach(i -> { linesIterator.previous(); linesIterator.remove(); });
         iters.fst.add(updatedLine);
+        rebuildText();
     }
 
     public String getText(Point start, Point end) {
