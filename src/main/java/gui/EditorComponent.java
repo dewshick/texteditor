@@ -167,40 +167,40 @@ public class EditorComponent extends JComponent implements Scrollable {
                 }
             });
 
-        bindKeyToAction(KeyEvent.VK_DELETE, e -> {
-                state.delete();
-                updateView(true);
-        });
+        Consumer<ActionEvent> deleteHandler = e -> { state.delete(); updateView(true); };
+        bindKeyToAction(KeyEvent.VK_DELETE, deleteHandler);
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('d'), KeyEvent.CTRL_DOWN_MASK, deleteHandler);
 
         bindKeyToAction(KeyEvent.VK_BACK_SPACE, e -> {
                 state.backspace();
                 updateView(true);
             });
 
-        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('i'), KeyEvent.CTRL_DOWN_MASK, e -> {
-                state.switchCaretMode();
-                updateView(false);
-            });
+        Consumer<ActionEvent> insertHandler = e -> { state.switchCaretMode(); updateView(false); };
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('i'), KeyEvent.CTRL_DOWN_MASK, insertHandler);
+        bindKeyToAction(KeyEvent.VK_INSERT, insertHandler);
 
-        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK, e -> {
-                state.pageUp(coordUtils.relativeRectangle(getVisibleRect()));
-                updateView(true);
-            });
-
-        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK, e -> {
-                state.pageDown(coordUtils.relativeRectangle(getVisibleRect()));
-                updateView(true);
-            });
-
-        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, e -> {
-            state.goToBeginning();
+        Consumer<ActionEvent> pageUpHandler = e -> {
+            state.pageUp(coordUtils.relativeRectangle(getVisibleRect()));
             updateView(true);
-        });
+        };
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK, pageUpHandler);
+        bindKeyToAction(KeyEvent.VK_PAGE_UP, pageUpHandler);
 
-        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, e -> {
-                state.goToEnd();
-                updateView(true);
-            });
+        Consumer<ActionEvent> pageDownHandler = e -> {
+            state.pageDown(coordUtils.relativeRectangle(getVisibleRect()));
+            updateView(true);
+        };
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK, pageDownHandler);
+        bindKeyToAction(KeyEvent.VK_PAGE_DOWN, pageDownHandler);
+
+        Consumer<ActionEvent> homeHandler = e -> { state.goToBeginning(); updateView(true); };
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, homeHandler);
+        bindKeyToAction(KeyEvent.VK_HOME, homeHandler);
+
+        Consumer<ActionEvent> endHandler = e -> { state.goToEnd(); updateView(true); };
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, endHandler);
+        bindKeyToAction(KeyEvent.VK_END, endHandler);
 
         addKeyListener(new KeyAdapter() {
             @Override
