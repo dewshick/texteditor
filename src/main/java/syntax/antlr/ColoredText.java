@@ -39,15 +39,19 @@ public class ColoredText {
         return coloredLines.get(n);
     }
 
+    public List<List<ColoredString>> getColoredLines() {
+        return coloredLines;
+    }
+
     List<List<ColoredString>> coloredLines;
 
     public ColoredText() {
         coloredLines = new TreeList<>(new TreeList<>());
     }
 
-//    public ColoredText(List<List<ColoredString>> coloredStrings) {
-//        this.coloredLines = coloredStrings;
-//    }
+    public ColoredText(List<List<ColoredString>> coloredStrings) {
+        this.coloredLines = coloredStrings;
+    }
 
     public void addText(Point position, String text) {
         List<ColoredString> newLines = ColoredString.stubStrings(text);

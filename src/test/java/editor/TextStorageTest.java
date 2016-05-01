@@ -5,6 +5,7 @@ import static org.junit.Assert.assertEquals;
 import gui.state.EditorTextStorage;
 import org.junit.Before;
 import org.junit.Test;
+import syntax.antlr.LexemeIndex;
 import syntax.document.SupportedSyntax;
 
 import java.awt.*;
@@ -18,6 +19,8 @@ import java.util.List;
 //TODO refactor all the combinatorics if there will be time for it
 public class TextStorageTest {
     EditorTextStorage textStorage;
+    LexemeIndex index;
+    LexemeIndex anotherIndex;
     String text;
 
     @Before
@@ -25,6 +28,8 @@ public class TextStorageTest {
         text = "firstline endoffirstline\nsecondline endofsecondline\nthirdline endofthirdline";
         textStorage = new EditorTextStorage(SupportedSyntax.JAVA);
         textStorage.setText(text);
+        index = new LexemeIndex(SupportedSyntax.JAVA, text);
+        anotherIndex = new LexemeIndex(SupportedSyntax.JAVA, text);
     }
 
     @Test
@@ -184,12 +189,16 @@ public class TextStorageTest {
     private void pasteText(Point coords, String addedText) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + addedText + text.substring(splitIndex);
+        anotherIndex.addText(splitIndex, addedText);
+        index.addText(textStorage.offsetFromCoords(coords), addedText);
         textStorage.addText(coords, addedText);
     }
 
     private void deleteText(Point coords, int length) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + text.substring(splitIndex + length);
+        anotherIndex.removeText(splitIndex, length);
+        index.removeText(textStorage.offsetFromCoords(coords), length);
         textStorage.removeText(coords, length);
     }
 
@@ -204,9 +213,7 @@ public class TextStorageTest {
 
     private void assertStateIsCorrect() {
         assertEquals(text, textStorage.getText());
-    }
-
-    private void insertText() {
-
+        assertEquals(text, index.getState().snd.getText());
+        assertEquals(text, anotherIndex.getState().snd.getText());
     }
 }

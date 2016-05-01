@@ -27,4 +27,8 @@ public class BracketHighlighting {
     public List<Point> getBrokenBraces() { return brokenBraces; }
     List<Point> workingBraces;
     List<Point> brokenBraces;
+
+    public static BracketHighlighting emptyHighlighting() {
+        return new BracketHighlighting(new ArrayList<>(), new ArrayList<>());
+    }
 }

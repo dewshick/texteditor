@@ -1,15 +1,15 @@
 package gui.state;
 
-import gui.view.EditorColors;
-import org.apache.commons.collections4.list.TreeList;
+import com.sun.tools.javac.util.Pair;
 import syntax.antlr.ColoredText;
 import syntax.antlr.LexemeIndex;
 import syntax.brackets.BracketHighlighting;
+import syntax.brackets.BracketIndex;
 import syntax.document.SupportedSyntax;
 import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.ListIterator;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 /**
@@ -18,41 +18,65 @@ import java.util.stream.IntStream;
  * all operations are done in relative coords (number of char in line/number of line)
  */
 public class EditorTextStorage {
-//    List<String> lines;
+    public synchronized void setLines(ColoredText lines) {
+        this.lines = lines;
+    }
+
+    //    List<String> lines;
     ColoredText lines;
 
-    LexemeIndex index;
+    CompletableFuture<LexemeIndex> index;
 
-    public SupportedSyntax getSyntax() {
+    public synchronized SupportedSyntax getSyntax() {
         return syntax;
     }
 
     SupportedSyntax syntax;
+    BracketIndex highlighting;
+
+    boolean sync;
 
     public EditorTextStorage(SupportedSyntax syntax) {
-        lines = new ColoredText();
-        lines.addText(new Point(0, 0), "");
-        index = new LexemeIndex(syntax, "");
+        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, ""));
+        forceSync();
         this.syntax = syntax;
     }
 
-    public String getText() { return lines.getText(); }
+    public synchronized String getText() { return lines.getText(); }
 
-    public void setText(String text) {
-        index = new LexemeIndex(syntax, text);
-        this.lines.setColoredLines(index.getColoredLines());
+    private synchronized void forceSync() {
+        try {
+            if (sync) return;
+            Pair<BracketIndex, ColoredText> state = index.get().getState();
+            highlighting = state.fst;
+            lines = state.snd;
+            sync = true;
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
     }
 
-    public BracketHighlighting getBracketHighlighting(Point caret) {
-        return index.getHighlighting(caret);
+    public synchronized void syncIfPossible() {
+        if (index.isDone()) forceSync();
+    }
+
+//    TODO: move async logic here
+    public synchronized void setText(String text) {
+        sync = false;
+        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, text));
+        forceSync();
+    }
+
+    public synchronized BracketHighlighting getBracketHighlighting(Point caret) {
+        if (sync) return highlighting.getHighlighting(caret);
+        return BracketHighlighting.emptyHighlighting();
     }
 
 //    TODO: use 2d int rectangle to return displayed area
 //    TODO: should be package-local
 
 
-    public List<ColoredString> getColoredLine(int line) {
-//        return index.getColoredLine(line);
+    public synchronized List<ColoredString> getColoredLine(int line) {
         return lines.getColoredLine(line);
     }
 
@@ -60,19 +84,31 @@ public class EditorTextStorage {
      * Edit text
      */
 
-    public void addText(Point position, String text) {
-        lines.addText(position, text);
+    public synchronized int offsetFromCoords(Point position) {
+        return getText(beginningOfText(), position).length();
     }
 
-    public void removeText(Point position, int length) {
+    public synchronized EditorTextStorage addText(Point position, String text) {
+        sync = false;
+        int offset = offsetFromCoords(position);
+        lines.addText(position, text);
+        index = index.thenApply(lexemes -> lexemes.addText(offset, text));
+        return this;
+    }
+
+    public synchronized void removeText(Point position, int length) {
         removeText(position, horizontalMove(position, length));
     }
 
-    private void removeText(Point start, Point end) {
+    private synchronized void removeText(Point start, Point end) {
+        sync = false;
+        int startOffset = offsetFromCoords(start);
+        int endOffset = offsetFromCoords(end);
         lines.removeText(start, end);
+        index = index.thenApply(lexemes -> lexemes.removeText(startOffset, endOffset - startOffset));
     }
 
-    public void removeText(EditorState.Selection selection) {
+    public synchronized void removeText(EditorState.Selection selection) {
         Point start = selection.startPoint();
         Point end = selection.endPoint();
         removeText(start, end);
@@ -80,7 +116,7 @@ public class EditorTextStorage {
 
 //    iterator code is almost the same for all the strings so maybe there's way to reuse it?
 //    to avoid complex testing/rewriting all the time
-    public String getText(Point start, Point end) {
+    public synchronized String getText(Point start, Point end) {
         return lines.getText(start, end);
     }
 
@@ -88,26 +124,26 @@ public class EditorTextStorage {
      * Various operations related to relative coords
      */
 
-    public int lastLineIndex() { return lines.lastLineIndex(); }
+    public synchronized int lastLineIndex() { return lines.lastLineIndex(); }
 
-    public Point beginningOfText() { return new Point(0,0); }
+    public synchronized Point beginningOfText() { return new Point(0,0); }
 
 //    TODO remove this weird method and fix logic
-    public int lineLength(int n) {
+    public synchronized int lineLength(int n) {
         String lastLine = lines.getLine(n);
         int length = lastLine.length();
         if (lastLine.endsWith("\n")) length -= 1;
         return length;
     }
 
-    public Point endOfText() { return new Point(lineLength(lastLineIndex()), lastLineIndex()); }
+    public synchronized Point endOfText() { return new Point(lineLength(lastLineIndex()), lastLineIndex()); }
 
-    public Dimension relativeSize() {
+    public synchronized Dimension relativeSize() {
         int width = IntStream.rangeClosed(0, lines.lastLineIndex()).map(this::lineLength).reduce(0, Integer::max);
         return new Dimension(width, lines.linesCount());
     }
 
-    public Point verticalMove(Point position, int direction) {
+    public synchronized Point verticalMove(Point position, int direction) {
         int newY = Math.min(Math.max(position.y + direction, 0), lastLineIndex());
         if (newY == position.y) return position;
         int newX = Math.min(lineLength(newY), position.x);
@@ -115,7 +151,7 @@ public class EditorTextStorage {
     }
 
 //    TODO: this can be easily optimized
-    public Point horizontalMove(Point position, int distance) {
+    public synchronized Point horizontalMove(Point position, int distance) {
         int direction = distance > 0 ? 1 : -1;
         int length = Math.abs(distance);
         for (;length > 0;length--) position = horizontalStep(position, direction);
@@ -123,7 +159,7 @@ public class EditorTextStorage {
     }
 
 //    moves only on 1 position
-    private Point horizontalStep(Point position, int direction) {
+    private synchronized Point horizontalStep(Point position, int direction) {
         int currentLineLength = lineLength(position.y);
         int newY = position.y;
         int newX = position.x + direction;
@@ -141,14 +177,14 @@ public class EditorTextStorage {
         return new Point(newX, newY);
     }
 
-    public Point closestCaretPosition(Point point) {
+    public synchronized Point closestCaretPosition(Point point) {
         if (point.y < 0) return beginningOfText();
         else if (point.y >= lines.linesCount()) return endOfText();
         else return new Point(Math.min(point.x, lineLength(point.y)), point.y);
     }
 
 //    correct string-split
-    public static List<String> buildLinesList(String str, boolean keepNewlines) {
+    public synchronized static List<String> buildLinesList(String str, boolean keepNewlines) {
         int initialIndex = 0;
         List<String> result = new ArrayList<>();
         for (int i = 0; i < str.length(); i++)
@@ -160,8 +196,9 @@ public class EditorTextStorage {
         return result;
     }
 
-    public void changeSyntax(SupportedSyntax syntax) {
-        index = new LexemeIndex(syntax, getText());
+    public synchronized EditorTextStorage changeSyntax(SupportedSyntax syntax) {
+        index = CompletableFuture.completedFuture(new LexemeIndex(syntax, getText()));
         this.syntax = syntax;
+        return this;
     }
 }
