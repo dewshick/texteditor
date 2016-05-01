@@ -11,6 +11,8 @@ import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
 import java.util.Timer;
+import java.util.function.Consumer;
+import java.util.function.Function;
 
 /**
  * Created by avyatkin on 06/04/16.
@@ -140,98 +142,65 @@ public class EditorComponent extends JComponent implements Scrollable {
     private void addCaretRelatedActions() {
         Arrays.asList(CaretDirection.values()).forEach(
                 caretDir -> {
-                    bindKeyToAction(caretDir.getKeyCode(), new AbstractAction() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
+                    bindKeyToAction(caretDir.getKeyCode(), e -> {
                             state.moveCaret(caretDir, false);
                             updateView(true);
-                        }
-                    });
+                        });
 
-                    bindKeyToAction(caretDir.getKeyCode(), KeyEvent.SHIFT_DOWN_MASK, new AbstractAction() {
-                        @Override
-                        public void actionPerformed(ActionEvent e) {
+                    bindKeyToAction(caretDir.getKeyCode(), KeyEvent.SHIFT_DOWN_MASK, e -> {
                             state.moveCaret(caretDir, true);
                             updateView(true);
-                        }
-                    });
+                        });
                 });
 
-        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('c'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('c'), KeyEvent.CTRL_DOWN_MASK, e -> {
                 Optional<String> selectedText = state.getSelectedText();
                 if (selectedText.isPresent()) ClipboardInterop.copy(selectedText.get());
                 updateView(false);
-            }
-        });
+            });
 
-        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('v'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('v'), KeyEvent.CTRL_DOWN_MASK, e -> {
                 Optional<String> pastedText = ClipboardInterop.paste();
                 if (pastedText.isPresent()) {
                     state.paste(pastedText.get());
                     updateView(true);
                 }
-            }
-        });
+            });
 
-        bindKeyToAction(KeyEvent.VK_DELETE, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.VK_DELETE, e -> {
                 state.delete();
                 updateView(true);
-            }
         });
 
-        bindKeyToAction(KeyEvent.VK_BACK_SPACE, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.VK_BACK_SPACE, e -> {
                 state.backspace();
                 updateView(true);
-            }
-        });
+            });
 
-        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('i'), KeyEvent.CTRL_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.getExtendedKeyCodeForChar('i'), KeyEvent.CTRL_DOWN_MASK, e -> {
                 state.switchCaretMode();
                 updateView(false);
-            }
-        });
+            });
 
-        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.ALT_DOWN_MASK, e -> {
                 state.pageUp(coordUtils.relativeRectangle(getVisibleRect()));
                 updateView(true);
-            }
-        });
+            });
 
-        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.ALT_DOWN_MASK, e -> {
                 state.pageDown(coordUtils.relativeRectangle(getVisibleRect()));
                 updateView(true);
-            }
+            });
+
+        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, e -> {
+            state.goToBeginning();
+            updateView(true);
         });
 
-        bindKeyToAction(KeyEvent.VK_UP, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                state.goToBeginning();
-                updateView(true);
-            }
-        });
-
-        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, new AbstractAction() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
+        bindKeyToAction(KeyEvent.VK_DOWN, KeyEvent.CTRL_DOWN_MASK | KeyEvent.ALT_DOWN_MASK, e -> {
                 state.goToEnd();
                 updateView(true);
-            }
-        });
+            });
 
         addKeyListener(new KeyAdapter() {
             @Override
@@ -255,7 +224,6 @@ public class EditorComponent extends JComponent implements Scrollable {
         });
 
         addMouseListener(new MouseAdapter() {
-            //TODO: selection if mouse moved in pressed state
             @Override
             public void mouseClicked(MouseEvent e) {
                 state.moveCaret(coordUtils.relativeMousePosition(e), e.isShiftDown());
@@ -285,9 +253,17 @@ public class EditorComponent extends JComponent implements Scrollable {
         },0, EditorState.Caret.CARET_BLINK_TIME);
     }
 
-    private void bindKeyToAction(int key, Action action) { bindKeyToAction(key, 0, action); }
+    private void bindKeyToAction(int key, Consumer<ActionEvent> consumer) {
+        bindKeyToAction(key, 0, consumer);
+    }
 
-    private void bindKeyToAction(int key, int modifier, Action action) {
+    private void bindKeyToAction(int key, int modifier, Consumer<ActionEvent> consumer) {
+        Action action = new AbstractAction() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                consumer.accept(e);
+            }
+        };
         String keyName = KeyEvent.getKeyText(key) + KeyEvent.getModifiersExText(modifier);
         getInputMap().put(KeyStroke.getKeyStroke(key, modifier),  keyName);
         getActionMap().put(keyName, action);
