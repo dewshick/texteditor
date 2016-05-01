@@ -6,7 +6,7 @@ import syntax.antlr.LexemeIndex;
  * Created by avyatkin on 02/05/16.
  */
 public class ExpirableAction {
-    static final long OUTDATE_PERIOD = 100;
+    static final long OUTDATE_PERIOD = 200;
 
     volatile long creationDate;
 

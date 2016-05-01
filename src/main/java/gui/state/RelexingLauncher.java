@@ -44,7 +44,7 @@ public class RelexingLauncher {
     public synchronized Pair<BracketIndex, ColoredText> getState() {
         runCurrentAction();
         try {
-            return relexer.thenApply(LexemeIndex::getState).get();
+            return relexer.thenApplyAsync(LexemeIndex::getState).get();
         } catch (InterruptedException | ExecutionException e) {
             throw new RuntimeException(e);
         }
@@ -77,7 +77,7 @@ public class RelexingLauncher {
 
     private void runCurrentAction() {
         if (recentAction.isPresent()) {
-            relexer = relexer.thenApply(recentAction.get()::apply);
+            relexer = relexer.thenApplyAsync(recentAction.get()::apply);
             recentAction = Optional.empty();
         }
     }
