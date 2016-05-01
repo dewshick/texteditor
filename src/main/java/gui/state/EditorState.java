@@ -9,6 +9,8 @@ import java.awt.event.KeyEvent;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 
 /**
  * Created by avyatkin on 22/04/16.
@@ -76,7 +78,7 @@ public class EditorState {
         if (!selection.isEmpty()) selection.removeTextUnderSelection();
         else if (caret.insertMode &&
                 typed != '\n' &&
-                textStorage.getLines().get(caret.relativePosition.y).length() > caret.relativePosition.x)
+                textStorage.lineLength(caret.relativePosition.y) > caret.relativePosition.x)
             textStorage.removeText(caret.positionAfterCaret(), 1);
         textStorage.addText(caret.relativePosition, typed + "");
         caret.move(CaretDirection.RIGHT, false);

@@ -8,6 +8,7 @@ import syntax.brackets.BracketHighlighting;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.stream.IntStream;
 
 /**
  * Created by avyatkin on 22/04/16.
@@ -62,7 +63,7 @@ public class EditorRenderer {
         selectionInBounds(clip).forEach(rect -> fillRectWithColor(g, rect, EditorColors.SELECTION));
 
         int yOffset = utils.fontHeight();
-        int yCoord = 0;
+//        int yCoord = 0;
 
 //        Rectangle bounds = utils.relativeRectangle(clip);
 //        TODO: render exact sublist of lines instead of iterating over whole list(faster and cleaner)
@@ -70,7 +71,8 @@ public class EditorRenderer {
 //        int yIndex = bounds.y;
 //        List<String> lines = state.getTextStorage().getLines().subList(bounds.y, bounds.y + bounds.height);
 
-        for (String line : state.getTextStorage().getLines()) {
+
+        for (int yCoord = 0; yCoord <= state.getTextStorage().lastLineIndex(); yCoord++) {
             if (yOffset >= clip.y) { //g.drawString(utils.stringInRelativeBounds(line, clip), xOffset, yOffset);
                 int offset = 0;
                 for(ColoredString str :  state.getTextStorage().getColoredLine(yCoord)) {
@@ -79,7 +81,6 @@ public class EditorRenderer {
                 }
             }
             yOffset += utils.fontHeight();
-            yCoord++;
             if (yOffset > clip.height + clip.y) break;
         }
         caretRenderer.renderCaret(g);
@@ -130,8 +131,8 @@ public class EditorRenderer {
 
     private void renderCharOnBackground(Graphics g, Point relativeCharCoords, Color color, Color background) {
         fillRectWithColor(g, utils.absoluteTile(relativeCharCoords), background);
-        String relevantLine = state.getTextStorage().getLines().get(relativeCharCoords.y);
-        if (relevantLine.length() <= relativeCharCoords.x) return;
+        int relevantLineLength = state.getTextStorage().lineLength(relativeCharCoords.y);
+        if (relevantLineLength <= relativeCharCoords.x) return;
         Point textEnd = new Point(relativeCharCoords.x + 1, relativeCharCoords.y);
         String text = state.getTextStorage().getText(relativeCharCoords, textEnd);
         drawStringWithColor(g, text, relativeCharCoords, color);
