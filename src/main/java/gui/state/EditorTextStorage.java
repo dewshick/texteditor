@@ -51,8 +51,9 @@ public class EditorTextStorage {
         }
     }
 
-    public synchronized void syncIfPossible() {
+    public synchronized boolean syncIfPossible() {
         if (index.isDone()) forceSync();
+        return sync;
     }
 
 //    TODO: move async logic here
@@ -135,8 +136,7 @@ public class EditorTextStorage {
     public synchronized Point endOfText() { return new Point(lineLength(lastLineIndex()), lastLineIndex()); }
 
     public synchronized Dimension relativeSize() {
-        int width = IntStream.rangeClosed(0, lines.lastLineIndex()).map(this::lineLength).reduce(0, Integer::max);
-        return new Dimension(width, lines.linesCount());
+        return lines.getRelativeSize();
     }
 
     public synchronized Point verticalMove(Point position, int direction) {

@@ -1,17 +1,19 @@
 package gui.state;
 
 import gui.EditorComponent;
+import gui.state.view.CaretState;
+import gui.state.view.SelectionState;
+import gui.state.view.StateView;
 import syntax.document.SupportedSyntax;
 
+import java.util.ArrayList;
+import java.util.List;
 import javax.swing.*;
 import java.awt.*;
-import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
-import java.time.Instant;
-import java.time.LocalDate;
+import java.util.HashMap;
 import java.util.Optional;
-import java.util.concurrent.ConcurrentLinkedQueue;
-import java.util.function.Function;
+import java.util.stream.IntStream;
 
 /**
  * Created by avyatkin on 22/04/16.
@@ -29,6 +31,28 @@ public class EditorState {
     Selection selection;
     Optional<Thread> loadingTask;
 
+    public synchronized boolean sync() {
+        return textStorage.syncIfPossible();
+    }
+
+    public synchronized StateView getStateView(Rectangle relativeRect) {
+        HashMap<Integer, List<ColoredString>> coloredLines = new HashMap<>();
+        IntStream.rangeClosed(relativeRect.y, relativeRect.y + relativeRect.height).forEach(
+                strNum -> {
+                    if (strNum > 0 && strNum <= textStorage.lastLineIndex())
+                        coloredLines.put(strNum, new ArrayList<>(textStorage.getColoredLine(strNum)));
+                });
+
+        return new StateView(
+                new CaretState(caret.shouldBeRendered(), caret.isInInsertMode(), (Point)caret.relativePosition.clone()),
+                coloredLines,
+                new SelectionState((Point)selection.startPoint().clone(), (Point)selection.endPoint().clone()),
+                isAvailable(),
+                textStorage.getBracketHighlighting(caret.relativePosition),
+                textStorage.relativeSize()
+        );
+    }
+
     public synchronized void setText(String text, EditorComponent comp) {
         Thread initialJob = new Thread(() -> {
 //            recompute in background, set in EDT
@@ -45,27 +69,16 @@ public class EditorState {
         initialJob.start();
     }
 
+    public synchronized String getText() {
+        return textStorage.getText();
+    }
+
     public synchronized boolean isAvailable() {
         return (!loadingTask.isPresent()) || (!loadingTask.get().isAlive());
     }
 
     private synchronized void setTextStorage(EditorTextStorage st) {
         textStorage = st;
-    }
-
-    @Deprecated
-    public synchronized EditorTextStorage getTextStorage() {
-        return textStorage;
-    }
-
-    @Deprecated
-    public Caret getCaret() {
-        return caret;
-    }
-
-    @Deprecated
-    public Selection getSelection() {
-        return selection;
     }
 
     public void changeSyntax(SupportedSyntax syntax) {
@@ -156,14 +169,9 @@ public class EditorState {
         caret.setRelativePosition(textStorage.closestCaretPosition(toMoveTo), false);
     }
 
-
-//    handled by pageUp/pageDown
-//    public void moveScreen(boolean down, boolean tillEdge) { }
-
-    //    TODO: NOT PUBLIC
-    public class Caret {
-        public static final long CARET_BLINK_TIME = 500;
-        public static final long CARET_PERSIST_TIME = 1000;
+    public static final long CARET_BLINK_TIME = 500;
+    public static final long CARET_PERSIST_TIME = 1000;
+    class Caret {
 
         Caret() {
             lastMoveTimestamp = System.currentTimeMillis();
@@ -229,7 +237,7 @@ public class EditorState {
         }
     }
 
-    public class Selection {
+    class Selection {
         public Selection() {
             dropSelection();
         }

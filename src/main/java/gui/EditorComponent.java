@@ -12,7 +12,6 @@ import java.awt.event.*;
 import java.util.List;
 import java.util.Timer;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
 /**
  * Created by avyatkin on 06/04/16.
@@ -23,7 +22,7 @@ public class EditorComponent extends JComponent implements Scrollable {
         state.setText(text, this);
     }
 
-    public String getText() { return state.getTextStorage().getText(); }
+    public String getText() { return state.getText(); }
 
     EditorState state;
     TextCoordUtils coordUtils;
@@ -32,6 +31,7 @@ public class EditorComponent extends JComponent implements Scrollable {
 //    TODO deal somehow with scroll pane update and remove this ugly workaround
     public void setScrollPane(JScrollPane pane) {
         scrollPane = pane;
+        scrollPane.getVerticalScrollBar().addAdjustmentListener(e -> updateView(false));
     }
 
     JScrollPane scrollPane;
@@ -39,7 +39,7 @@ public class EditorComponent extends JComponent implements Scrollable {
     public EditorComponent(SupportedSyntax syntax) {
         state = new EditorState(syntax);
         coordUtils = new TextCoordUtils(this);
-        renderer = new EditorRenderer(state, coordUtils);
+        renderer = new EditorRenderer(state.getStateView(getVisibleRect()), coordUtils);
         setDoubleBuffered(true);
         addFocusRelatedListeners();
         addCaretRelatedActions();
@@ -126,6 +126,8 @@ public class EditorComponent extends JComponent implements Scrollable {
 
     public void updateView(boolean caretMoved) {
         if (caretMoved) scrollRectToVisible(renderer.getCaretRenderer().caretRect());
+        renderer.setState(state.getStateView(coordUtils.relativeRectangle(getBounds())));
+
         repaint();
     }
 
@@ -245,12 +247,11 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void run() {
                 SwingUtilities.invokeLater(() -> {
-                    if (!state.getCaret().isInInsertMode())
-                        repaint(renderer.getCaretRenderer().caretRect());
-                    state.getTextStorage().syncIfPossible();
+                    state.sync();
+                    updateView(false);
                 });
             }
-        },0, EditorState.Caret.CARET_BLINK_TIME);
+        },0, EditorState.CARET_BLINK_TIME);
     }
 
     private void bindKeyToAction(int key, Consumer<ActionEvent> consumer) {

@@ -1,21 +1,29 @@
 package gui.view;
 
 import gui.state.ColoredString;
-import gui.state.EditorState;
-import gui.state.EditorTextStorage;
+import gui.state.view.CaretState;
+import gui.state.view.SelectionState;
+import gui.state.view.StateView;
 import syntax.brackets.BracketHighlighting;
 
 import java.awt.*;
 import java.util.*;
 import java.util.List;
-import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 
 /**
  * Created by avyatkin on 22/04/16.
  */
 public class EditorRenderer {
-    EditorState state;
+    StateView state;
+    StateView oldState;
+
     TextCoordUtils utils;
+
+    public void setState(StateView state) {
+        oldState = this.state;
+        this.state = state;
+    }
 
     public CaretRenderer getCaretRenderer() {
         return caretRenderer;
@@ -23,31 +31,30 @@ public class EditorRenderer {
 
     CaretRenderer caretRenderer;
 
-    public EditorRenderer(EditorState state1, TextCoordUtils params1) {
+    public EditorRenderer(StateView state1, TextCoordUtils params1) {
         state = state1;
         utils = params1;
         caretRenderer = new CaretRenderer();
     }
 
-//    TODO: do we need to pass rectangle?
     private List<Rectangle> selectionInBounds(Rectangle bounds) {
         List<Rectangle> result = new ArrayList<>();
         Dimension size = getPreferredSize();
-        EditorState.Selection selection = state.getSelection();
+        SelectionState selection = state.getSelectionState();
+        if (selection.isSelectionEmpty()) return result;
 
-        if (selection.isEmpty()) return result;
-        if (selection.startPoint().y == selection.endPoint().y) {
-            result.add(utils.absoluteRectangle(new Rectangle(selection.startPoint().x, selection.startPoint().y, selection.endPoint().x - selection.startPoint().x, 1)));
+        if (selection.getStart().y == selection.getEnd().y) {
+            Rectangle selectionRect = utils.absoluteRectangle(selection.getStart(), selection.getEnd().x - selection.getStart().x, 1);
+            result.add(selectionRect);
         } else {
-            result.add(utils.absoluteRectangle(new Rectangle(selection.startPoint().x, selection.startPoint().y, size.width, 1)));
-            for (int i = selection.startPoint().y + 1; i < selection.endPoint().y; i++)
+            result.add(utils.absoluteRectangle(selection.getStart(), size.width, 1));
+            for (int i = selection.getStart().y + 1; i < selection.getEnd().y; i++)
                 result.add(utils.absoluteRectangle(new Rectangle(0, i, size.width, 1)));
-            result.add(utils.absoluteRectangle(new Rectangle(0, selection.endPoint().y, selection.endPoint().x, 1)));
+            result.add(utils.absoluteRectangle(new Rectangle(0, selection.getEnd().y, selection.getEnd().x, 1)));
         }
-        return result;
+        return result.stream().filter(bounds::intersects).map(bounds::intersection).collect(Collectors.toList());
     }
 
-    //    TODO: render all this in separate specified class
     //    TODO: intersect updated area with relative rectangle and render diff
     public void paintState(Graphics g) {
         g.setFont(TextCoordUtils.FONT);
@@ -62,8 +69,6 @@ public class EditorRenderer {
 
         selectionInBounds(clip).forEach(rect -> fillRectWithColor(g, rect, EditorColors.SELECTION));
 
-        int yOffset = utils.fontHeight();
-//        int yCoord = 0;
 
 //        Rectangle bounds = utils.relativeRectangle(clip);
 //        TODO: render exact sublist of lines instead of iterating over whole list(faster and cleaner)
@@ -72,56 +77,51 @@ public class EditorRenderer {
 //        List<String> lines = state.getTextStorage().getLines().subList(bounds.y, bounds.y + bounds.height);
 
 
-        for (int yCoord = 0; yCoord <= state.getTextStorage().lastLineIndex(); yCoord++) {
-            if (yOffset >= clip.y) { //g.drawString(utils.stringInRelativeBounds(line, clip), xOffset, yOffset);
-                int offset = 0;
-                for(ColoredString str :  state.getTextStorage().getColoredLine(yCoord)) {
-                    drawStringWithColor(g, str.getContent(), new Point(offset, yCoord), str.getColor());
-                    offset += str.getContent().length();
-                }
+        for (Map.Entry<Integer, List<ColoredString>> lineWithIndex : state.getDisplayedLines().entrySet()) {
+            int offset = 0;
+            int yCoord = lineWithIndex.getKey();
+            List<ColoredString> coloredLines = lineWithIndex.getValue();
+            for (ColoredString str : coloredLines) {
+                drawStringWithColor(g, str.getContent(), new Point(offset, yCoord), str.getColor());
+                offset += str.getContent().length();
             }
-            yOffset += utils.fontHeight();
-            if (yOffset > clip.height + clip.y) break;
         }
         caretRenderer.renderCaret(g);
     }
 
     public Dimension getPreferredSize() {
         //        TODO compute incrementally
-        return utils.absoluteDimension(state.getTextStorage().relativeSize());
+        return utils.absoluteDimension(state.getRelativeSize());
     }
 
     @Deprecated
     public class CaretRenderer {
-        public CaretRenderer() {
-            caret = state.getCaret();
+        public CaretState caret() {
+            return state.getCaretState();
         }
-
-        EditorState.Caret caret;
 
         static final int CARET_WIDTH = 2;
 
         public Rectangle caretRect() {
-            Rectangle result = utils.absoluteTile(caret.getRelativePosition());
-            if (!caret.isInInsertMode()) result.width = CARET_WIDTH;
+            Rectangle result = utils.absoluteTile(caret().getCoords());
+            if (!caret().isInInsertMode()) result.width = CARET_WIDTH;
             return result;
         }
 
         public void renderCaret(Graphics g) {
-//            TODO: RENDER ONLY DIFF
             renderBracketHighlighting(g);
 
-            if (caret.isInInsertMode()) {
-                renderCharOnBackground(g, caret.getRelativePosition(), EditorColors.TEXT_OVER_INSERT_CARET, EditorColors.INSERT_CARET);
+            if (caret().isInInsertMode()) {
+                renderCharOnBackground(g, caret().getCoords(), EditorColors.TEXT_OVER_INSERT_CARET, EditorColors.INSERT_CARET);
             } else {
-                if (!caret.shouldBeRendered()) return;
+                if (!caret().isShouldBeRendered()) return;
                 fillRectWithColor(g, caretRect(), EditorColors.CARET);
             }
 
         }
 
         private void renderBracketHighlighting(Graphics g) {
-            BracketHighlighting highlighting = state.getTextStorage().getBracketHighlighting(caret.getRelativePosition());
+            BracketHighlighting highlighting = state.getBracketHighlighting();
             highlighting.getBrokenBraces().forEach(coords ->
                     renderCharOnBackground(g, coords, EditorColors.TEXT_OVER_BROKEN_BRACKET, EditorColors.BRACKET_BACKGROUND));
             highlighting.getWorkingBraces().forEach(coords ->
@@ -131,10 +131,11 @@ public class EditorRenderer {
 
     private void renderCharOnBackground(Graphics g, Point relativeCharCoords, Color color, Color background) {
         fillRectWithColor(g, utils.absoluteTile(relativeCharCoords), background);
-        int relevantLineLength = state.getTextStorage().lineLength(relativeCharCoords.y);
-        if (relevantLineLength <= relativeCharCoords.x) return;
+
+        if (g.getClipBounds().intersects(utils.absoluteTile(relativeCharCoords))) return;
+
         Point textEnd = new Point(relativeCharCoords.x + 1, relativeCharCoords.y);
-        String text = state.getTextStorage().getText(relativeCharCoords, textEnd);
+        String text = state.getText(relativeCharCoords, textEnd);
         drawStringWithColor(g, text, relativeCharCoords, color);
     }
 

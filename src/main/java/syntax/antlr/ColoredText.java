@@ -1,38 +1,35 @@
 package syntax.antlr;
 
 import com.sun.tools.javac.util.Pair;
-import gui.EditorComponent;
 import gui.state.ColoredString;
 import gui.state.EditorTextStorage;
 import org.apache.commons.collections4.list.TreeList;
-
 import java.awt.*;
-import java.lang.reflect.Array;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.stream.Collector;
-import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
 /**
  * Created by avyatkin on 01/05/16.
  */
 public class ColoredText {
-
-//    TODO: cache value
     public String getText() {
         return text;
     }
 
-//    TODO: cache value
     public String getLine(int n) {
         return lines.get(n);
     }
 
+    public Dimension getRelativeSize() {
+        return relativeSize;
+    }
+
     String text;
     List<String> lines;
+    Dimension relativeSize;
 
     private void rebuildText() {
         StringBuilder textBuilder = new StringBuilder();
@@ -41,6 +38,11 @@ public class ColoredText {
                 textBuilder.append(str.getContent());
         text = textBuilder.toString();
         lines = EditorTextStorage.buildLinesList(text, true);
+        int maxWidth = 0;
+        for(String str: lines)
+            if (str.length() > maxWidth)
+                maxWidth = str.length();
+        relativeSize = new Dimension(maxWidth ,linesCount() + 1);
     }
 
     public List<ColoredString> getColoredLine(int n) {

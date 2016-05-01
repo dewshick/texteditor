@@ -38,8 +38,8 @@ public class TextCoordUtils {
         return new Rectangle(
                 rect.x / fontWidth(),
                 rect.y/ fontHeight(),
-                rect.width / fontWidth(),
-                rect.height / fontHeight());
+                (rect.width / fontWidth()) + 1,
+                (rect.height / fontHeight()) + 1); // need to add 1 to guarantee overlapping
     }
 
     public Point absoluteCoords(Point point) {
@@ -55,6 +55,10 @@ public class TextCoordUtils {
     public Rectangle absoluteRectangle(Rectangle rect) {
         Point absoluteCoords = absoluteCoords(new Point(rect.x, rect.y));
         return new Rectangle(absoluteCoords.x, absoluteCoords.y, rect.width * fontWidth(), rect.height * fontHeight());
+    }
+
+    public Rectangle absoluteRectangle(Point relativeCoords, int width, int height) {
+        return absoluteRectangle(new Rectangle(relativeCoords.x, relativeCoords.y, width, height));
     }
 
     public String stringInRelativeBounds(String str, Rectangle bounds) {
