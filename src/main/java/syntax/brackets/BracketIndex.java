@@ -1,6 +1,7 @@
 package syntax.brackets;
 import com.sun.tools.javac.util.Pair;
 import gui.state.ColoredString;
+import syntax.antlr.ColoredText;
 import syntax.antlr.Lexeme;
 import syntax.antlr.LexemeIndex;
 import syntax.document.SupportedSyntax;
@@ -15,7 +16,7 @@ import java.util.List;
 // currently we highlight only single brackets
 // get rid of boxed lists since it's overkill for memory
 public class BracketIndex {
-    public BracketIndex(SupportedSyntax syntax, LexemeIndex lexer) {
+    public BracketIndex(SupportedSyntax syntax, ColoredText text) {
         List<Pair<String, String>> bracketPairs = syntax.bracketPairs();
         brokenBracesForCaret = new HashMap<>();
         correctBracesForCaret = new HashMap<>();
@@ -25,7 +26,7 @@ public class BracketIndex {
             bracesStacks.put(brackets, new Stack<>());
 
         int yCoord = 0;
-        for(List<ColoredString> coloredStrings : lexer.getColoredLines()) {
+        for(List<ColoredString> coloredStrings : text.getColoredLines()) {
             int xCoord = 0;
             for (ColoredString str : coloredStrings) {
                 Point currentCoords = new Point(xCoord, yCoord);

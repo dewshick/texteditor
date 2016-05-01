@@ -1,5 +1,6 @@
 package syntax.antlr;
 
+import com.sun.tools.javac.util.Pair;
 import gui.state.ColoredString;
 import gui.view.EditorColors;
 import org.apache.commons.collections4.list.TreeList;
@@ -38,16 +39,20 @@ public class LexemeIndex {
         lexer = lexerByInputStream(new ANTLRInputStream(code));
         lexemes = new LinkedList<>();
         lexer.getAllTokens().forEach(t -> lexemes.add(lexemeFromToken(t)));
-        rebuildLexemesByLines();
     }
 
     private List<Lexeme> lexemes;
 
+    @Deprecated
     public List<Lexeme> lexemes() { return lexemes; }
 
-    List<List<ColoredString>> coloredLines;
+    public Pair<BracketIndex, ColoredText> getState() {
+        ColoredText text = coloredText();
+        BracketIndex index = new BracketIndex(syntax, text);
+        return new Pair<>(index, coloredText());
+    }
 
-    public void rebuildLexemesByLines() {
+    private ColoredText coloredText() {
         SyntaxColoring coloring = EditorColors.forSyntax(syntax);
 
         List<List<ColoredString>> result = new TreeList<>();
@@ -68,20 +73,11 @@ public class LexemeIndex {
             } else initialLine.add(colored);
         }
         result.add(initialLine);
-        coloredLines = result;
-        rebuildBracketIndex();
-    }
-
-    public void rebuildBracketIndex() {
-        bracketIndex = new BracketIndex(syntax, this);
+        return new ColoredText(result);
     }
 
     public BracketHighlighting getHighlighting(Point caret) {
         return bracketIndex.getHighlighting(caret);
-    }
-
-    public List<ColoredString> getColoredLine(int line) {
-        return coloredLines.get(line);
     }
 
     private Lexeme lexemeFromToken(Token current) {
@@ -92,7 +88,7 @@ public class LexemeIndex {
     }
 
 //    we have only stateless lexers here so we do not need to remember any modes whatsoever
-    public List<Lexeme> addText(int offset, String newText) {
+    public LexemeIndex addText(int offset, String newText) {
         ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
         String extendedText = newText;
         int updatedLexemeOffset = 0;
@@ -107,11 +103,10 @@ public class LexemeIndex {
                 oldLexemeIterator,
                 updatedLexemeOffset,
                 newText.length()).syncLexemes();
-        rebuildLexemesByLines();
-        return result;
+        return this;
     }
 
-    public List<Lexeme> removeText(int offset, int length) {
+    public LexemeIndex removeText(int offset, int length) {
         ListIterator<Lexeme> oldLexemeIterator = beforeFirstAffectedLexeme(offset);
         if (oldLexemeIterator.hasNext()) {
             StringBuilder modifiedTextBuilder = new StringBuilder();
@@ -126,11 +121,8 @@ public class LexemeIndex {
             String modifiedText = modifiedTextBuilder.toString();
             modifiedText = modifiedText.substring(0, removedZoneOffset) + modifiedText.substring(removedZoneOffset + length);
             List<Lexeme> result = new IncrementalRetokenizer(modifiedText, oldLexemeIterator, newLexemesOffset, -length).syncLexemes();
-            rebuildLexemesByLines();
-            return result;
-        } else {
-            return new LinkedList<>();
         }
+        return this;
     }
 
 
@@ -158,11 +150,7 @@ public class LexemeIndex {
         throw new RuntimeException("Unknown syntax type: " + syntax); //impossible
     }
 
-    public List<List<ColoredString>> getColoredLines() {
-        return coloredLines;
-    }
-
-    class IncrementalRetokenizer {
+    private class IncrementalRetokenizer {
         IncrementalRetokenizer(String extendedText, ListIterator<Lexeme> oldLexemesIter, int newOffset, int oldOffset) {
             updateLexer = updatedCodeLexer(extendedText, lexemes.listIterator(oldLexemesIter.nextIndex()));
             oldLexemesIterator = oldLexemesIter;

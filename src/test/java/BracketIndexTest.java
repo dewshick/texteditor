@@ -15,7 +15,7 @@ import java.util.stream.Collectors;
  */
 public class BracketIndexTest {
     private BracketIndex bracketIndex(String code) {
-        return new BracketIndex(SupportedSyntax.JAVA, new LexemeIndex(SupportedSyntax.JAVA, code));
+        return new BracketIndex(SupportedSyntax.JAVA, new LexemeIndex(SupportedSyntax.JAVA, code).getState().snd);
     }
 
     BracketIndex correctBrackets = bracketIndex("()");

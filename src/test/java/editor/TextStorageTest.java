@@ -5,10 +5,12 @@ import static org.junit.Assert.assertEquals;
 import gui.state.EditorTextStorage;
 import org.junit.Before;
 import org.junit.Test;
+import syntax.antlr.LexemeIndex;
 import syntax.document.SupportedSyntax;
 
 import java.awt.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -18,6 +20,8 @@ import java.util.List;
 //TODO refactor all the combinatorics if there will be time for it
 public class TextStorageTest {
     EditorTextStorage textStorage;
+    LexemeIndex index;
+    LexemeIndex anotherIndex;
     String text;
 
     @Before
@@ -25,61 +29,64 @@ public class TextStorageTest {
         text = "firstline endoffirstline\nsecondline endofsecondline\nthirdline endofthirdline";
         textStorage = new EditorTextStorage(SupportedSyntax.JAVA);
         textStorage.setText(text);
+        index = new LexemeIndex(SupportedSyntax.JAVA, text);
+        anotherIndex = new LexemeIndex(SupportedSyntax.JAVA, text);
+    }
+
+    List<String> pastedTemplates = Arrays.asList("\n", "\n\n", "\n\n\n\n\n\n\n", "\nhello", "\nyeah\n", "whatever", "what\never", "what\nso\never", "too\nmany\nnewlines\nyeah\n");
+
+    private void pastingTest(Point coords) {
+        pastedTemplates.forEach(str -> {
+            init();
+            pasteText(coords, str);
+            assertStateIsCorrect(str);
+        });
     }
 
     @Test
     public void addInBeginning() {
-        pasteText(new Point(0,0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 0));
     }
 
     @Test
     public void addOnStartOfMiddleLine() {
-        pasteText(new Point(0,1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 1));
     }
 
     @Test
     public void addOnStartOfLastLine() {
-        pasteText(new Point(0,2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point(0, 2));
     }
 
     @Test
     public void addOnEndOfFirstLine() {
-        pasteText(new Point("firstline endoffirstline".length(), 0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("firstline endoffirstline".length(), 0));
     }
 
     @Test
     public void addOnEndOfMiddleLine() {
-        pasteText(new Point("secondline endofsecondline".length(), 1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("secondline endofsecondline".length(), 1));
     }
 
     @Test
     public void addOnEndOfLastLine() {
-        pasteText(new Point("thirdline endofthirdline".length(), 2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("thirdline endofthirdline".length(), 2));
     }
 
 
     @Test
     public void addInMiddleOfFirstLine() {
-        pasteText(new Point("firstline".length(), 0), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("firstline".length(), 0));
     }
 
     @Test
     public void addInMiddleOfMiddleLine() {
-        pasteText(new Point("secondline".length(), 1), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("secondline".length(), 1));
     }
 
     @Test
     public void addInMiddleOfLastLine() {
-        pasteText(new Point("thirdline".length(), 2), "what\never");
-        assertStateIsCorrect();
+        pastingTest(new Point("thirdline".length(), 2));
     }
 
     @Test
@@ -184,12 +191,16 @@ public class TextStorageTest {
     private void pasteText(Point coords, String addedText) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + addedText + text.substring(splitIndex);
+        anotherIndex.addText(splitIndex, addedText);
+        index.addText(textStorage.offsetFromCoords(coords), addedText);
         textStorage.addText(coords, addedText);
     }
 
     private void deleteText(Point coords, int length) {
         int splitIndex = splitIndex(coords);
         text = text.substring(0, splitIndex) + text.substring(splitIndex + length);
+        anotherIndex.removeText(splitIndex, length);
+        index.removeText(textStorage.offsetFromCoords(coords), length);
         textStorage.removeText(coords, length);
     }
 
@@ -203,10 +214,13 @@ public class TextStorageTest {
     }
 
     private void assertStateIsCorrect() {
-        assertEquals(text, textStorage.getText());
+        assertStateIsCorrect("");
     }
 
-    private void insertText() {
-
+    private void assertStateIsCorrect(String added) {
+        String description = added.replace("\n", "\\n");
+        assertEquals(description, text, textStorage.getText());
+        assertEquals(description, text, index.getState().snd.getText());
+        assertEquals(description, text, anotherIndex.getState().snd.getText());
     }
 }

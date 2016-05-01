@@ -1,13 +1,17 @@
 package gui.state;
 
+import gui.EditorComponent;
 import syntax.document.SupportedSyntax;
 
+import javax.swing.*;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
 import java.awt.event.KeyEvent;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.util.Optional;
+import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.function.Function;
 
 /**
  * Created by avyatkin on 22/04/16.
@@ -25,22 +29,32 @@ public class EditorState {
     Selection selection;
     Optional<Thread> loadingTask;
 
-    public void setText(String text) {
+    public synchronized void setText(String text, EditorComponent comp) {
         Thread initialJob = new Thread(() -> {
-            textStorage.setText(text);
-            caret = new Caret();
-            selection = new Selection();
+//            recompute in background, set in EDT
+            EditorTextStorage storage = new EditorTextStorage(textStorage.getSyntax());
+            storage.setText(text);
+            SwingUtilities.invokeLater(() -> {
+                setTextStorage(storage);
+                comp.updateViewWithScroll();
+            });
         });
+        selection = new Selection();
+        caret.setRelativePosition(new Point(0,0), false);
         loadingTask = Optional.of(initialJob);
         initialJob.start();
     }
 
-    public boolean isAvailable() {
+    public synchronized boolean isAvailable() {
         return (!loadingTask.isPresent()) || (!loadingTask.get().isAlive());
     }
 
+    private synchronized void setTextStorage(EditorTextStorage st) {
+        textStorage = st;
+    }
+
     @Deprecated
-    public EditorTextStorage getTextStorage() {
+    public synchronized EditorTextStorage getTextStorage() {
         return textStorage;
     }
 
@@ -68,7 +82,7 @@ public class EditorState {
         if (!selection.isEmpty()) selection.removeTextUnderSelection();
         else if (caret.insertMode &&
                 typed != '\n' &&
-                textStorage.getLines().get(caret.relativePosition.y).length() > caret.relativePosition.x)
+                textStorage.lineLength(caret.relativePosition.y) > caret.relativePosition.x)
             textStorage.removeText(caret.positionAfterCaret(), 1);
         textStorage.addText(caret.relativePosition, typed + "");
         caret.move(CaretDirection.RIGHT, false);
