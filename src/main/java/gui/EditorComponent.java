@@ -246,9 +246,8 @@ public class EditorComponent extends JComponent implements Scrollable {
             @Override
             public void run() {
                 SwingUtilities.invokeLater(() -> {
-                    if (!state.getCaret().isInInsertMode())
-                        repaint(renderer.getCaretRenderer().caretRect());
                     state.getTextStorage().syncIfPossible();
+                    repaint();
                 });
             }
         },0, EditorState.Caret.CARET_BLINK_TIME);
